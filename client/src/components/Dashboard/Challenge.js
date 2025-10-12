@@ -27,7 +27,7 @@ const Challenge = ({ activeChallenge, onChallengeStart, onChallengeEnd, streak }
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [activeChallenge]); // eslint-disable-line
+  }, [activeChallenge]);
 
   const fetchChallenges = async () => {
     setFetching(true);

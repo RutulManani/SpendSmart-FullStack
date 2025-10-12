@@ -11,18 +11,57 @@ const app = express();
 app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
 // Routes
 const authRoutes        = require('./routes/auth');
 const adminRoutes       = require('./routes/admin');
 const challengesRoutes  = require('./routes/challenges');
 const categoriesRoutes  = require('./routes/categories');
-const expensesRoutes    = require('./routes/expenses');  // <-- NEW
+const expensesRoutes    = require('./routes/expenses');
+const profileRoutes = require('./routes/profile');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/challenges', challengesRoutes);
 app.use('/api/categories', categoriesRoutes);
-app.use('/api/expenses', expensesRoutes);                // <-- MOUNTED
+app.use('/api/expenses', expensesRoutes);
+app.use('/api/profile', profileRoutes);
+
+// Debug route to check all registered routes
+app.get('/api/debug/routes', (req, res) => {
+  const routes = [];
+  
+  function printRoutes(layer, prefix = '') {
+    if (layer.route) {
+      const path = prefix + layer.route.path;
+      routes.push({
+        path: path,
+        methods: Object.keys(layer.route.methods)
+      });
+    } else if (layer.name === 'router' && layer.handle.stack) {
+      const newPrefix = prefix + (layer.regexp.toString() !== '/^\\/?(?=\\/|$)/i' ? layer.regexp.toString().replace(/^\/\^\\\//, '').replace(/\\\/\?\(\?=\\\/\|\$\)\/i$/, '') : '');
+      layer.handle.stack.forEach((handler) => {
+        printRoutes(handler, newPrefix);
+      });
+    }
+  }
+
+  app._router.stack.forEach((layer) => {
+    printRoutes(layer);
+  });
+  
+  res.json({ routes });
+});
+
+// Test route for expenses
+app.get('/api/test-expenses', (req, res) => {
+  res.json({ message: 'Expenses route is working!' });
+});
 
 // Ensure admin exists
 const User = require('./models/User');

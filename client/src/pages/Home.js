@@ -190,7 +190,7 @@ const Home = () => {
       <footer className="border-t border-[#444] py-8">
         <div className="max-w-[1400px] mx-auto px-5 text-center">
           <p className="text-[#A9A9A9]">
-            © 2025 SpendSmart. Built for HTTP 5310 Capstone Project.
+            © 2025 SpendSmart.
           </p>
         </div>
       </footer>

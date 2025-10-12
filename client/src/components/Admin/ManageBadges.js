@@ -41,7 +41,7 @@ export default function ManageBadges() {
 
     const payload = {
       name: form.name,
-      title: form.name, // be compatible with either schema
+      title: form.name,
       description: form.description || undefined,
       points: form.points ? Number(form.points) : undefined,
     };

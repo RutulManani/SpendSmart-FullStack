@@ -47,7 +47,6 @@ export default function ManageChallenges() {
     setErr('');
 
     const payload = {
-      // send both title & name to be compatible with either schema
       title: form.title,
       name: form.title,
       description: form.description,

@@ -2,15 +2,17 @@
 import React from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import AdminDashboard from '../components/Admin/AdminDashboard';
+import ManageUsers from '../components/Admin/ManageUsers';
 import ManageChallenges from '../components/Admin/ManageChallenges';
 import ManageCategories from '../components/Admin/ManageCategories';
 import ManageBadges from '../components/Admin/ManageBadges';
-import { LayoutDashboard, Target, Tag, Award } from 'lucide-react';
+import { LayoutDashboard, Users, Target, Tag, Award } from 'lucide-react';
 
 const AdminPanel = () => {
   const location = useLocation();
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+    { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
     { id: 'challenges', label: 'Challenges', icon: Target, path: '/admin/challenges' },
     { id: 'categories', label: 'Categories', icon: Tag, path: '/admin/categories' },
     { id: 'badges', label: 'Badges', icon: Award, path: '/admin/badges' },
@@ -49,6 +51,7 @@ const AdminPanel = () => {
         <div className="bg-[#2D2D2D] rounded-lg border border-[#444] p-6">
           <Routes>
             <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<ManageUsers />} />
             <Route path="challenges" element={<ManageChallenges />} />
             <Route path="categories" element={<ManageCategories />} />
             <Route path="badges" element={<ManageBadges />} />

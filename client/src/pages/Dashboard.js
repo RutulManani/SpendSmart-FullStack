@@ -56,6 +56,22 @@ const Dashboard = () => {
     }
   };
 
+  // NEW: Handle expense updates
+  const handleExpenseUpdated = (updatedExpense) => {
+    setExpenses(prevExpenses => 
+      prevExpenses.map(expense => 
+        expense._id === updatedExpense._id ? updatedExpense : expense
+      )
+    );
+  };
+
+  // NEW: Handle expense deletions
+  const handleExpenseDeleted = (expenseId) => {
+    setExpenses(prevExpenses => 
+      prevExpenses.filter(expense => expense._id !== expenseId)
+    );
+  };
+
   const handleChallengeStart = (challenge) => {
     setActiveChallenge(challenge);
     setProgress(0);
@@ -99,7 +115,11 @@ const Dashboard = () => {
       />
 
       {/* Bottom Row - Spending History */}
-      <SpendingHistory expenses={expenses} />
+      <SpendingHistory 
+        expenses={expenses} 
+        onExpenseUpdated={handleExpenseUpdated}
+        onExpenseDeleted={handleExpenseDeleted}
+      />
     </main>
   );
 };

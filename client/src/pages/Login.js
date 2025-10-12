@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, AlertCircle, Loader } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Loader, CheckCircle } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -10,18 +10,11 @@ const Login = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Redirect if already logged in
-  React.useEffect(() => {
-    if (user) {
-      const from = location.state?.from?.pathname || (user.role === 'admin' ? '/admin' : '/dashboard');
-      navigate(from, { replace: true });
-    }
-  }, [user, navigate, location]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,6 +29,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess(false);
 
     // Basic validation
     if (!formData.email || !formData.password) {
@@ -56,15 +50,20 @@ const Login = () => {
       const result = await login(formData.email, formData.password);
 
       if (result.success) {
-        // Get the redirect path from location state or default
-        const from = location.state?.from?.pathname || '/dashboard';
-        navigate(from, { replace: true });
+        setSuccess(true);
+        setLoading(false);
+        
+        // Show success message for exactly 1 second, then redirect
+        setTimeout(() => {
+          const from = location.state?.from?.pathname || (result.user.role === 'admin' ? '/admin' : '/dashboard');
+          navigate(from, { replace: true });
+        }, 1000);
       } else {
         setError(result.error || 'Login failed. Please try again.');
+        setLoading(false);
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
@@ -83,6 +82,17 @@ const Login = () => {
         {/* Login Card */}
         <div className="bg-[#2D2D2D] rounded-lg border border-[#444] p-8">
           <h2 className="text-2xl font-semibold text-white mb-6">Sign In</h2>
+
+          {/* Success Message */}
+          {success && (
+            <div className="mb-6 p-4 bg-green-900/30 border-2 border-green-500 rounded-lg flex items-center gap-3 animate-pulse">
+              <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
+              <div>
+                <p className="text-green-400 font-semibold">🎉 Login Successful!</p>
+                <p className="text-green-400 text-sm mt-1">Redirecting to dashboard...</p>
+              </div>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -109,7 +119,7 @@ const Login = () => {
                   onChange={handleChange}
                   className="w-full pl-11 pr-4 py-3 bg-[#3D3D3D] text-white border border-[#444] rounded-lg focus:outline-none focus:border-[#B7FF00] transition-colors"
                   placeholder="your@email.com"
-                  disabled={loading}
+                  disabled={loading || success}
                   autoComplete="email"
                 />
               </div>
@@ -130,7 +140,7 @@ const Login = () => {
                   onChange={handleChange}
                   className="w-full pl-11 pr-4 py-3 bg-[#3D3D3D] text-white border border-[#444] rounded-lg focus:outline-none focus:border-[#B7FF00] transition-colors"
                   placeholder="••••••••"
-                  disabled={loading}
+                  disabled={loading || success}
                   autoComplete="current-password"
                 />
               </div>
@@ -140,12 +150,17 @@ const Login = () => {
             <button
               type="submit"
               className="w-full py-3 bg-[#B7FF00] text-[#181818] font-semibold rounded-lg hover:bg-[#a3e600] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              disabled={loading}
+              disabled={loading || success}
             >
               {loading ? (
                 <>
                   <Loader className="w-5 h-5 animate-spin" />
                   <span>Signing In...</span>
+                </>
+              ) : success ? (
+                <>
+                  <CheckCircle className="w-5 h-5" />
+                  <span>Success! Redirecting...</span>
                 </>
               ) : (
                 <span>Sign In</span>
@@ -172,15 +187,6 @@ const Login = () => {
               </Link>
             </p>
           </div>
-        </div>
-
-        {/* Demo Credentials Info */}
-        <div className="mt-6 bg-[#2D2D2D] rounded-lg border border-[#444] p-4">
-          <p className="text-[#A9A9A9] text-xs text-center">
-            <strong className="text-white">Demo Credentials:</strong><br />
-            Admin: admin@spendsmart.com / admin123<br />
-            User: user@spendsmart.com / user123
-          </p>
         </div>
 
         {/* Back to Home */}

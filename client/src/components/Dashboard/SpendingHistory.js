@@ -1,11 +1,15 @@
 // client/src/components/Dashboard/SpendingHistory.js
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Filter, Download, Calendar } from 'lucide-react';
+import { ChevronDown, ChevronUp, Filter, Calendar, Edit2, Trash2, Save, X } from 'lucide-react';
+import api from '../../services/api';
 
-const SpendingHistory = ({ expenses }) => {
+const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const getMoodColor = (mood) => {
     const colors = {
@@ -53,6 +57,22 @@ const SpendingHistory = ({ expenses }) => {
     return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Helper: convert Date -> "YYYY-MM-DDTHH:mm" for <input type="datetime-local">
+  const toLocalInputValue = (d) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const min = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+  };
+
+  const moods = [
+    'happy', 'sad', 'stressed', 'bored',
+    'excited', 'angry', 'relaxed', 'neutral'
+  ];
+
   const filteredExpenses = expenses
     .filter(expense => {
       if (filter === 'all') return true;
@@ -74,6 +94,86 @@ const SpendingHistory = ({ expenses }) => {
   const categories = [...new Set(expenses.map(expense => expense.category))];
   const totalSpent = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
   const averageSpent = expenses.length > 0 ? totalSpent / expenses.length : 0;
+
+  const handleEdit = (expense) => {
+    setEditingId(expense._id);
+    setEditForm({
+      amount: expense.amount,
+      mood: expense.mood,
+      category: expense.category,
+      dateTime: toLocalInputValue(getDateObj(expense) || new Date())
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const handleSaveEdit = async (expenseId) => {
+    if (!editForm.amount || !editForm.mood || !editForm.category || !editForm.dateTime) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Convert local datetime to ISO string for backend
+      const isoDate = new Date(editForm.dateTime).toISOString();
+
+      console.log('Sending update request for expense:', expenseId);
+      console.log('Update data:', {
+        amount: parseFloat(editForm.amount),
+        mood: editForm.mood,
+        category: editForm.category,
+        date: isoDate,
+      });
+      
+      const response = await api.put(`/expenses/${expenseId}`, {
+        amount: parseFloat(editForm.amount),
+        mood: editForm.mood,
+        category: editForm.category,
+        date: isoDate,
+      });
+
+      console.log('Update response:', response);
+      
+      onExpenseUpdated(response.data.expense);
+      setEditingId(null);
+      setEditForm({});
+      alert('Expense updated successfully!');
+    } catch (error) {
+      console.error('Update expense error:', error);
+      console.error('Error response:', error.response);
+      alert(error.response?.data?.error || 'Failed to update expense. Please check the server console for details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (expenseId) => {
+    // Confirmation dialog before deletion
+    if (!window.confirm('Are you sure you want to delete this expense? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('Sending delete request for expense:', expenseId);
+      
+      await api.delete(`/expenses/${expenseId}`);
+      
+      console.log('Delete successful');
+      onExpenseDeleted(expenseId);
+      alert('Expense deleted successfully!');
+    } catch (error) {
+      console.error('Delete expense error:', error);
+      console.error('Error response:', error.response);
+      alert(error.response?.data?.error || 'Failed to delete expense. Please check the server console for details.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section className="bg-[#2D2D2D] p-5 rounded-[10px] border border-[#444]">
@@ -163,38 +263,133 @@ const SpendingHistory = ({ expenses }) => {
                       index % 2 === 0 ? 'bg-[#3D3D3D]' : 'bg-[#383838]'
                     }`}
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="text-2xl">
-                            {getMoodIcon(expense.mood)}
-                          </span>
+                    {editingId === expense._id ? (
+                      // Edit Form
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
-                            <p className="text-white font-medium capitalize">
-                              {expense.category}
-                            </p>
-                            <p className={`text-sm capitalize ${getMoodColor(expense.mood)}`}>
-                              {expense.mood}
-                            </p>
+                            <label className="block text-[#A9A9A9] text-sm mb-1">Amount</label>
+                            <input
+                              type="number"
+                              value={editForm.amount}
+                              onChange={(e) => setEditForm(f => ({ ...f, amount: e.target.value }))}
+                              className="w-full p-2 bg-[#2b2b2b] border border-[#444] text-white rounded"
+                              step="0.01"
+                              min="0"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[#A9A9A9] text-sm mb-1">Mood</label>
+                            <select
+                              value={editForm.mood}
+                              onChange={(e) => setEditForm(f => ({ ...f, mood: e.target.value }))}
+                              className="w-full p-2 bg-[#2b2b2b] border border-[#444] text-white rounded"
+                            >
+                              {moods.map(m => (
+                                <option key={m} value={m}>
+                                  {m.charAt(0).toUpperCase() + m.slice(1)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[#A9A9A9] text-sm mb-1">Category</label>
+                            <select
+                              value={editForm.category}
+                              onChange={(e) => setEditForm(f => ({ ...f, category: e.target.value }))}
+                              className="w-full p-2 bg-[#2b2b2b] border border-[#444] text-white rounded"
+                            >
+                              <option value="">Select Category</option>
+                              {categories.map(cat => (
+                                <option key={cat} value={cat}>
+                                  {String(cat || '').charAt(0).toUpperCase() + String(cat || '').slice(1)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[#A9A9A9] text-sm mb-1">Date & Time</label>
+                            <input
+                              type="datetime-local"
+                              value={editForm.dateTime}
+                              onChange={(e) => setEditForm(f => ({ ...f, dateTime: e.target.value }))}
+                              className="w-full p-2 bg-[#2b2b2b] border border-[#444] text-white rounded"
+                            />
                           </div>
                         </div>
-                        {expense.note && (
-                          <p className="text-[#A9A9A9] text-sm mt-1">
-                            {expense.note}
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div className="text-right">
-                        <p className="text-white font-semibold text-lg">
-                          ${Number(expense.amount || 0).toFixed(2)}
-                        </p>
-                        <div className="text-[#A9A9A9] text-sm">
-                          <p>{formatDate(expense)}</p>
-                          <p>{formatTime(expense)}</p>
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            onClick={() => handleSaveEdit(expense._id)}
+                            disabled={loading}
+                            className="flex items-center gap-2 px-3 py-2 bg-[#B7FF00] text-[#181818] rounded hover:bg-[#a3e600] transition-colors disabled:opacity-50"
+                          >
+                            <Save className="w-4 h-4" />
+                            {loading ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            disabled={loading}
+                            className="flex items-center gap-2 px-3 py-2 bg-[#333] text-white rounded border border-[#555] hover:bg-[#444] transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                            Cancel
+                          </button>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      // Display Mode
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-2xl">
+                              {getMoodIcon(expense.mood)}
+                            </span>
+                            <div>
+                              <p className="text-white font-medium capitalize">
+                                {expense.category}
+                              </p>
+                              <p className={`text-sm capitalize ${getMoodColor(expense.mood)}`}>
+                                {expense.mood}
+                              </p>
+                            </div>
+                          </div>
+                          {expense.note && (
+                            <p className="text-[#A9A9A9] text-sm mt-1">
+                              {expense.note}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div className="text-right">
+                          <p className="text-white font-semibold text-lg">
+                            ${Number(expense.amount || 0).toFixed(2)}
+                          </p>
+                          <div className="text-[#A9A9A9] text-sm">
+                            <p>{formatDate(expense)}</p>
+                            <p>{formatTime(expense)}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 ml-4">
+                          <button
+                            onClick={() => handleEdit(expense)}
+                            disabled={loading}
+                            className="p-2 rounded bg-[#2b2b2b] border border-[#444] text-gray-200 hover:text-white transition-colors disabled:opacity-50"
+                            title="Edit expense"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(expense._id)}
+                            disabled={loading}
+                            className="p-2 rounded bg-[#2b2b2b] border border-[#444] text-red-300 hover:text-red-400 transition-colors disabled:opacity-50"
+                            title="Delete expense"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
