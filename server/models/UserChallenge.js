@@ -1,47 +1,16 @@
+// server/models/UserChallenge.js
 const mongoose = require('mongoose');
 
-const userChallengeSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+const UserChallengeSchema = new mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    challengeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Challenge', required: true },
+    startedAt: { type: Date, default: Date.now },
+    endedAt: { type: Date },
+    progress: { type: Number, default: 0 },
+    status: { type: String, enum: ['active', 'completed'], default: 'active' },
   },
-  challengeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Challenge',
-    required: true
-  },
-  startedAt: {
-    type: Date,
-    default: Date.now
-  },
-  completedAt: {
-    type: Date,
-    default: null
-  },
-  progress: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 100
-  },
-  status: {
-    type: String,
-    enum: ['active', 'completed', 'failed', 'abandoned'],
-    default: 'active'
-  },
-  pointsEarned: {
-    type: Number,
-    default: 0
-  },
-  streakCount: {
-    type: Number,
-    default: 1
-  }
-});
+  { timestamps: true }
+);
 
-// Index for efficient queries
-userChallengeSchema.index({ userId: 1, status: 1 });
-userChallengeSchema.index({ userId: 1, challengeId: 1 });
-
-module.exports = mongoose.model('UserChallenge', userChallengeSchema);
+module.exports = mongoose.model('UserChallenge', UserChallengeSchema);

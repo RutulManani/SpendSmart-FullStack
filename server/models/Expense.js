@@ -1,42 +1,21 @@
+// server/models/Expense.js
 const mongoose = require('mongoose');
 
-const expenseSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+const ExpenseSchema = new mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    amount: { type: Number, required: true, min: 0 },
+    mood: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      enum: ['happy', 'sad', 'stressed', 'bored', 'excited', 'angry', 'relaxed', 'neutral', 'other'],
+      default: 'neutral',
+    },
+    category: { type: String, trim: true, default: 'other' },
+    date: { type: Date, default: Date.now }, // NEW: expense date/time
   },
-  amount: {
-    type: Number,
-    required: true,
-    min: 0
-  },
-  category: {
-    type: String,
-    required: true
-  },
-  mood: {
-    type: String,
-    required: true,
-    enum: ['happy', 'sad', 'stressed', 'bored', 'excited', 'angry', 'relaxed', 'neutral']
-  },
-  note: {
-    type: String,
-    maxlength: 500
-  },
-  date: {
-    type: Date,
-    default: Date.now
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+  { timestamps: true }
+);
 
-// Index for efficient queries
-expenseSchema.index({ userId: 1, date: -1 });
-expenseSchema.index({ userId: 1, category: 1 });
-expenseSchema.index({ userId: 1, mood: 1 });
-
-module.exports = mongoose.model('Expense', expenseSchema);
+module.exports = mongoose.model('Expense', ExpenseSchema);

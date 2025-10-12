@@ -1,41 +1,54 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const connectDB = require('./config/db');
+// server/server.js
+require('dotenv').config();
+const express  = require('express');
+const cors     = require('cors');
+const mongoose = require('mongoose');
+const bcrypt   = require('bcryptjs');
 
-// Load environment variables
-dotenv.config();
-
-// Create Express app
 const app = express();
 
-// Connect to MongoDB
-connectDB();
-
 // Middleware
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/expenses', require('./routes/expenses'));
-app.use('/api/challenges', require('./routes/challenges'));
-app.use('/api/admin', require('./routes/admin'));
+const authRoutes        = require('./routes/auth');
+const adminRoutes       = require('./routes/admin');
+const challengesRoutes  = require('./routes/challenges');
+const categoriesRoutes  = require('./routes/categories');
+const expensesRoutes    = require('./routes/expenses');  // <-- NEW
 
-// Health check route
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'SpendSmart API is running' });
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/challenges', challengesRoutes);
+app.use('/api/categories', categoriesRoutes);
+app.use('/api/expenses', expensesRoutes);                // <-- MOUNTED
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
+// Ensure admin exists
+const User = require('./models/User');
+async function ensureAdmin() {
+  const email = (process.env.SEED_ADMIN_EMAIL || 'admin@spendsmart.com').toLowerCase();
+  const plain = process.env.SEED_ADMIN_PASSWORD || 'admin123';
+  const hash  = await bcrypt.hash(plain, 10);
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  let user = await User.findOne({ email }).select('+password');
+  if (!user) {
+    await User.create({ name: 'Admin', email, password: hash, role: 'admin' });
+    console.log(`✅ Admin created: ${email} / ${plain}`);
+  } else {
+    user.role = 'admin';
+    user.password = hash;
+    await user.save();
+    console.log(`✅ Admin password reset to: ${plain}`);
+  }
+}
+
+mongoose.connect(process.env.MONGODB_URI).then(async () => {
+  console.log('✅ MongoDB connected');
+  await ensureAdmin();
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
+}).catch(err => {
+  console.error('❌ MongoDB error:', err.message);
+  process.exit(1);
 });

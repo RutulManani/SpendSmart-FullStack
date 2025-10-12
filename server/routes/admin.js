@@ -1,174 +1,189 @@
+// server/routes/admin.js
 const express = require('express');
 const router = express.Router();
 const adminAuth = require('../middleware/adminAuth');
-const Challenge = require('../models/Challenge');
+
 const Category = require('../models/Category');
+const Challenge = require('../models/Challenge');
 const Badge = require('../models/Badge');
 const User = require('../models/User');
 
-// All admin routes require admin authentication
-router.use(adminAuth);
+// Helper to send friendly errors
+const sendError = (res, err, fallback = 'Request failed') => {
+  const message =
+    err?.message ||
+    err?.errors?.[Object.keys(err.errors || {})[0]]?.message ||
+    err?.response?.data?.error ||
+    fallback;
+  return res.status(400).json({ error: message });
+};
 
 // Dashboard stats
-router.get('/stats', async (req, res) => {
+router.get('/stats', adminAuth, async (_req, res) => {
   try {
-    const totalUsers = await User.countDocuments({ role: 'user' });
-    const totalChallenges = await Challenge.countDocuments();
-    const totalCategories = await Category.countDocuments();
-    const totalBadges = await Badge.countDocuments();
-
-    res.json({
-      totalUsers,
-      totalChallenges,
-      totalCategories,
-      totalBadges
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching stats' });
+    const [totalUsers, totalChallenges, totalCategories, totalBadges] =
+      await Promise.all([
+        User.countDocuments(),
+        Challenge.countDocuments(),
+        Category.countDocuments(),
+        Badge.countDocuments(),
+      ]);
+    res.json({ totalUsers, totalChallenges, totalCategories, totalBadges });
+  } catch (err) {
+    return sendError(res, err, 'Failed to fetch admin stats');
   }
 });
 
-// User management
-router.get('/users', async (req, res) => {
+/** ===================== Categories ===================== */
+router.get('/categories', adminAuth, async (_req, res) => {
   try {
-    const users = await User.find()
-      .select('-password')
-      .sort({ createdAt: -1 });
-    res.json({ users });
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching users' });
+    const items = await Category.find().sort({ createdAt: -1 });
+    res.json(items);
+  } catch (err) {
+    return sendError(res, err, 'Failed to load categories');
   }
 });
 
-// Challenge management
-router.get('/challenges', async (req, res) => {
+router.post('/categories', adminAuth, async (req, res) => {
   try {
-    const challenges = await Challenge.find().sort({ createdAt: -1 });
-    res.json({ challenges });
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching challenges' });
-  }
-});
-
-router.post('/challenges', async (req, res) => {
-  try {
-    const challenge = new Challenge({
+    const payload = {
       ...req.body,
-      createdBy: req.userId
-    });
-    await challenge.save();
-    res.status(201).json({ challenge });
-  } catch (error) {
-    res.status(500).json({ error: 'Error creating challenge' });
+      createdBy: req.userId,
+    };
+    // normalize: if name missing but title exists, keep as-is (model ensures one exists)
+    const item = await Category.create(payload);
+    res.json(item);
+  } catch (err) {
+    return sendError(res, err, 'Failed to create category');
   }
 });
 
-router.put('/challenges/:id', async (req, res) => {
+router.put('/categories/:id', adminAuth, async (req, res) => {
   try {
-    const challenge = await Challenge.findByIdAndUpdate(
+    const updated = await Category.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
+      { ...req.body },
+      { new: true, runValidators: true }
     );
-    res.json({ challenge });
-  } catch (error) {
-    res.status(500).json({ error: 'Error updating challenge' });
+    res.json(updated);
+  } catch (err) {
+    return sendError(res, err, 'Failed to update category');
   }
 });
 
-router.delete('/challenges/:id', async (req, res) => {
-  try {
-    await Challenge.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Challenge deleted' });
-  } catch (error) {
-    res.status(500).json({ error: 'Error deleting challenge' });
-  }
-});
-
-// Category management
-router.get('/categories', async (req, res) => {
-  try {
-    const categories = await Category.find().sort({ name: 1 });
-    res.json({ categories });
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching categories' });
-  }
-});
-
-router.post('/categories', async (req, res) => {
-  try {
-    const category = new Category({
-      ...req.body,
-      createdBy: req.userId
-    });
-    await category.save();
-    res.status(201).json({ category });
-  } catch (error) {
-    res.status(500).json({ error: 'Error creating category' });
-  }
-});
-
-router.put('/categories/:id', async (req, res) => {
-  try {
-    const category = await Category.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json({ category });
-  } catch (error) {
-    res.status(500).json({ error: 'Error updating category' });
-  }
-});
-
-router.delete('/categories/:id', async (req, res) => {
+router.delete('/categories/:id', adminAuth, async (req, res) => {
   try {
     await Category.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Category deleted' });
-  } catch (error) {
-    res.status(500).json({ error: 'Error deleting category' });
+    res.json({ success: true });
+  } catch (err) {
+    return sendError(res, err, 'Failed to delete category');
   }
 });
 
-// Badge management
-router.get('/badges', async (req, res) => {
+/** ===================== Challenges ===================== */
+router.get('/challenges', adminAuth, async (_req, res) => {
   try {
-    const badges = await Badge.find().sort({ createdAt: -1 });
-    res.json({ badges });
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching badges' });
+    const items = await Challenge.find().sort({ createdAt: -1 });
+    res.json(items);
+  } catch (err) {
+    return sendError(res, err, 'Failed to load challenges');
   }
 });
 
-router.post('/badges', async (req, res) => {
+router.post('/challenges', adminAuth, async (req, res) => {
   try {
-    const badge = new Badge(req.body);
-    await badge.save();
-    res.status(201).json({ badge });
-  } catch (error) {
-    res.status(500).json({ error: 'Error creating badge' });
+    const payload = {
+      ...req.body,
+      createdBy: req.userId,
+    };
+
+    // Try to coerce date strings if present
+    if (payload.startDate && typeof payload.startDate === 'string') {
+      const d = new Date(payload.startDate);
+      if (!isNaN(d)) payload.startDate = d;
+    }
+    if (payload.endDate && typeof payload.endDate === 'string') {
+      const d = new Date(payload.endDate);
+      if (!isNaN(d)) payload.endDate = d;
+    }
+
+    const item = await Challenge.create(payload);
+    res.json(item);
+  } catch (err) {
+    return sendError(res, err, 'Failed to create challenge');
   }
 });
 
-router.put('/badges/:id', async (req, res) => {
+router.put('/challenges/:id', adminAuth, async (req, res) => {
   try {
-    const badge = await Badge.findByIdAndUpdate(
+    const payload = { ...req.body };
+    if (payload.startDate && typeof payload.startDate === 'string') {
+      const d = new Date(payload.startDate);
+      if (!isNaN(d)) payload.startDate = d;
+    }
+    if (payload.endDate && typeof payload.endDate === 'string') {
+      const d = new Date(payload.endDate);
+      if (!isNaN(d)) payload.endDate = d;
+    }
+
+    const updated = await Challenge.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
+      payload,
+      { new: true, runValidators: true }
     );
-    res.json({ badge });
-  } catch (error) {
-    res.status(500).json({ error: 'Error updating badge' });
+    res.json(updated);
+  } catch (err) {
+    return sendError(res, err, 'Failed to update challenge');
   }
 });
 
-router.delete('/badges/:id', async (req, res) => {
+router.delete('/challenges/:id', adminAuth, async (req, res) => {
+  try {
+    await Challenge.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    return sendError(res, err, 'Failed to delete challenge');
+  }
+});
+
+/** ===================== Badges ===================== */
+router.get('/badges', adminAuth, async (_req, res) => {
+  try {
+    const items = await Badge.find().sort({ createdAt: -1 });
+    res.json(items);
+  } catch (err) {
+    return sendError(res, err, 'Failed to load badges');
+  }
+});
+
+router.post('/badges', adminAuth, async (req, res) => {
+  try {
+    const item = await Badge.create({ ...req.body, createdBy: req.userId });
+    res.json(item);
+  } catch (err) {
+    return sendError(res, err, 'Failed to create badge');
+  }
+});
+
+router.put('/badges/:id', adminAuth, async (req, res) => {
+  try {
+    const updated = await Badge.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body },
+      { new: true, runValidators: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    return sendError(res, err, 'Failed to update badge');
+  }
+});
+
+router.delete('/badges/:id', adminAuth, async (req, res) => {
   try {
     await Badge.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Badge deleted' });
-  } catch (error) {
-    res.status(500).json({ error: 'Error deleting badge' });
+    res.json({ success: true });
+  } catch (err) {
+    return sendError(res, err, 'Failed to delete badge');
   }
 });
 

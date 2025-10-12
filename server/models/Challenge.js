@@ -1,49 +1,31 @@
+// server/models/Challenge.js
 const mongoose = require('mongoose');
 
-const challengeSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true
+const ChallengeSchema = new mongoose.Schema(
+  {
+    // support both "title" and "name" (admin UI sends both)
+    title: { type: String, trim: true },
+    name: { type: String, trim: true },
+    description: { type: String, trim: true },
+    target: { type: Number, default: 0 },
+    startDate: { type: Date },
+    endDate: { type: Date },
+    isActive: { type: Boolean, default: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
-  description: {
-    type: String,
-    required: true
-  },
-  rules: {
-    type: String,
-    required: true
-  },
-  durationHours: {
-    type: Number,
-    default: 24
-  },
-  pointsReward: {
-    type: Number,
-    default: 100
-  },
-  category: {
-    type: String,
-    enum: ['spending', 'saving', 'tracking', 'mood'],
-    default: 'spending'
-  },
-  difficulty: {
-    type: String,
-    enum: ['easy', 'medium', 'hard'],
-    default: 'medium'
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  { timestamps: true }
+);
+
+// Ensure at least one of title/name is present
+ChallengeSchema.pre('validate', function (next) {
+  if (!this.title && !this.name) {
+    this.invalidate('title', 'Either title or name is required');
   }
+  next();
 });
 
-module.exports = mongoose.model('Challenge', challengeSchema);
+ChallengeSchema.virtual('display').get(function () {
+  return this.title || this.name || '(untitled)';
+});
+
+module.exports = mongoose.model('Challenge', ChallengeSchema);

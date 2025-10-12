@@ -1,48 +1,26 @@
+// server/models/Badge.js
 const mongoose = require('mongoose');
 
-const badgeSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true
+const BadgeSchema = new mongoose.Schema(
+  {
+    name: { type: String, trim: true },
+    title: { type: String, trim: true },
+    description: { type: String, trim: true },
+    points: { type: Number, default: 0 },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
-  description: {
-    type: String,
-    required: true
-  },
-  imageUrl: {
-    type: String,
-    default: '/badges/default.png'
-  },
-  rule: {
-    type: String,
-    required: true
-  },
-  criteria: {
-    type: {
-      type: String,
-      enum: ['streak', 'challenges_completed', 'expenses_logged', 'savings', 'custom'],
-      required: true
-    },
-    value: {
-      type: Number,
-      required: true
-    }
-  },
-  rarity: {
-    type: String,
-    enum: ['common', 'rare', 'epic', 'legendary'],
-    default: 'common'
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  { timestamps: true }
+);
+
+BadgeSchema.pre('validate', function (next) {
+  if (!this.name && !this.title) {
+    this.invalidate('name', 'Either name or title is required');
   }
+  next();
 });
 
-module.exports = mongoose.model('Badge', badgeSchema);
+BadgeSchema.virtual('display').get(function () {
+  return this.name || this.title || '(untitled)';
+});
+
+module.exports = mongoose.model('Badge', BadgeSchema);

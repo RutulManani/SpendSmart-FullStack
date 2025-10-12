@@ -1,3 +1,9 @@
+/* ---- Tailwind v3 entry (must appear once in the app) ---- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- Your global resets and fonts ---- */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -7,7 +13,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Optional: code font (CRA default) */
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }

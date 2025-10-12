@@ -1,0 +1,185 @@
+// client/src/components/Admin/ManageCategories.js
+import React, { useEffect, useState } from 'react';
+import api from '../../services/api';
+import { Plus, Edit2, Trash2, Save, X, Tag } from 'lucide-react';
+
+const displayName = (o) => o?.name || o?.title || o?.label || '(untitled)';
+const normalize = (data) => (Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : []);
+
+export default function ManageCategories() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState({ name: '', description: '', color: '' });
+
+  const fetchList = async () => {
+    setLoading(true);
+    setErr('');
+    try {
+      const { data } = await api.get('/admin/categories');
+      setItems(normalize(data));
+    } catch (e) {
+      setErr(e?.response?.data?.error || 'Failed to load categories');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchList();
+  }, []);
+
+  const resetForm = () => {
+    setForm({ name: '', description: '', color: '' });
+    setEditingId(null);
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setErr('');
+
+    const payload = {
+      name: form.name,
+      title: form.name, // to be safe with either schema
+      description: form.description || undefined,
+      color: form.color || undefined,
+    };
+
+    try {
+      if (editingId) {
+        const { data } = await api.put(`/admin/categories/${editingId}`, payload);
+        setItems((prev) => prev.map((x) => (x._id === editingId ? data : x)));
+      } else {
+        const { data } = await api.post('/admin/categories', payload);
+        setItems((prev) => [data, ...prev]);
+      }
+      resetForm();
+    } catch (e) {
+      setErr(e?.response?.data?.error || 'Save failed');
+    }
+  };
+
+  const onEdit = (item) => {
+    setEditingId(item._id);
+    setForm({
+      name: item.name || item.title || '',
+      description: item.description || '',
+      color: item.color || '',
+    });
+  };
+
+  const onDelete = async (id) => {
+    if (!window.confirm('Delete this category?')) return;
+    try {
+      await api.delete(`/admin/categories/${id}`);
+      setItems((prev) => prev.filter((x) => x._id !== id));
+      if (editingId === id) resetForm();
+    } catch (e) {
+      setErr(e?.response?.data?.error || 'Delete failed');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg p-5">
+        <h3 className="text-xl text-white font-semibold mb-4">Create / Edit Category</h3>
+
+        {err && <div className="text-red-400 mb-3">{err}</div>}
+
+        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label className="flex flex-col gap-2">
+            <span className="text-sm text-gray-300">Name *</span>
+            <input
+              className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="e.g., Food & Dining"
+              required
+            />
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-sm text-gray-300">Color (optional)</span>
+            <input
+              className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
+              value={form.color}
+              onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
+              placeholder="#FFAA00"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2 md:col-span-2">
+            <span className="text-sm text-gray-300">Description</span>
+            <textarea
+              className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              rows={3}
+              placeholder="Short description..."
+            />
+          </label>
+
+          <div className="flex gap-3 items-center md:col-span-2">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 bg-lime-400/90 hover:bg-lime-400 text-black font-semibold px-4 py-2 rounded"
+            >
+              {editingId ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              {editingId ? 'Save Changes' : 'Create'}
+            </button>
+            {editingId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex items-center gap-2 bg-[#333] text-white px-4 py-2 rounded border border-[#555]"
+              >
+                <X className="w-4 h-4" /> Cancel
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      <div className="bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg p-5">
+        <h3 className="text-xl text-white font-semibold mb-4">Categories</h3>
+
+        {loading ? (
+          <div className="text-gray-300">Loading…</div>
+        ) : items.length === 0 ? (
+          <div className="text-gray-400">No categories yet.</div>
+        ) : (
+          <ul className="divide-y divide-[#333]">
+            {items.map((item) => (
+              <li key={item._id} className="py-3 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <Tag className="w-4 h-4 text-yellow-400" />
+                  <div>
+                    <div className="text-white font-medium">{displayName(item)}</div>
+                    {item.description && (
+                      <div className="text-sm text-gray-400">{item.description}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onEdit(item)}
+                    className="p-2 rounded bg-[#2b2b2b] border border-[#444] text-gray-200 hover:text-white"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => onDelete(item._id)}
+                    className="p-2 rounded bg-[#2b2b2b] border border-[#444] text-red-300 hover:text-red-400"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}

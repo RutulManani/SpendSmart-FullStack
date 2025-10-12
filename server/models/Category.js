@@ -1,37 +1,30 @@
+// server/models/Category.js
 const mongoose = require('mongoose');
 
-const categorySchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true
+const CategorySchema = new mongoose.Schema(
+  {
+    // accept either "name" or "title" from client
+    name: { type: String, trim: true },
+    title: { type: String, trim: true },
+    // always expose a computed display field
+    description: { type: String, trim: true },
+    color: { type: String, trim: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
-  type: {
-    type: String,
-    enum: ['expense', 'mood'],
-    required: true
-  },
-  icon: {
-    type: String,
-    default: '📁'
-  },
-  color: {
-    type: String,
-    default: '#4CAF50'
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  { timestamps: true }
+);
+
+// Ensure at least one of name/title is present
+CategorySchema.pre('validate', function (next) {
+  if (!this.name && !this.title) {
+    this.invalidate('name', 'Either name or title is required');
   }
+  next();
 });
 
-module.exports = mongoose.model('Category', categorySchema);
+// A virtual for consistent display
+CategorySchema.virtual('display').get(function () {
+  return this.name || this.title || '(untitled)';
+});
+
+module.exports = mongoose.model('Category', CategorySchema);

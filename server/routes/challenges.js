@@ -1,14 +1,13 @@
+// server/routes/challenges.js
 const express = require('express');
 const router = express.Router();
-const challengeController = require('../controllers/challengeController');
 const auth = require('../middleware/auth');
+const ctrl = require('../controllers/challengeController');
 
-router.use(auth);
-
-router.get('/', challengeController.getChallenges);
-router.post('/start', challengeController.startChallenge);
-router.get('/active', challengeController.getActiveChallenge);
-router.post('/end/:challengeId', challengeController.endChallenge);
-router.get('/history', challengeController.getChallengeHistory);
+// All of these are user-facing (auth required), not admin-only
+router.get('/', auth, ctrl.listChallenges);
+router.get('/active', auth, ctrl.getActiveChallenge);
+router.post('/start', auth, ctrl.startChallenge);
+router.post('/end/:id', auth, ctrl.endChallenge);
 
 module.exports = router;
