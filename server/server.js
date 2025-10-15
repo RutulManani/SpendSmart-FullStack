@@ -8,8 +8,11 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 
+// If you set cookies (JWT) from behind a proxy (Render), enable this:
+app.set('trust proxy', 1);
+
 /* =========================
-   CORS — put FIRST
+   CORS — must be FIRST
    ========================= */
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://spend-smart-full-stack.vercel.app';
 
@@ -20,9 +23,9 @@ const allowList = new Set([
   'http://127.0.0.1:3000'
 ]);
 
-// allow any Vercel preview for this project, with or without team slug in the subdomain
+// allow any Vercel preview for this project, with/without team slug:
 // e.g. https://spend-smart-full-stack-abc123.vercel.app
-// e.g. https://spend-smart-full-stack-abc123-yourteam.vercel.app
+//      https://spend-smart-full-stack-abc123-yourteam.vercel.app
 const vercelPreview = /^https:\/\/spend-smart-full-stack[-a-z0-9]*\.(?:[a-z0-9-]+\.)?vercel\.app$/i;
 
 const corsOptions = {
@@ -39,8 +42,11 @@ const corsOptions = {
   allowedHeaders: ['Content-Type','Authorization']
 };
 
+// Apply CORS globally
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // handle preflight early
+
+// Handle OPTIONS preflight safely on Express 5 (regex instead of '*')
+app.options(/.*/, cors(corsOptions)); // ✅ works with express@5
 
 /* =========================
    Core middleware
@@ -66,7 +72,7 @@ const expensesRoutes = require('./routes/expenses');
 const profileRoutes = require('./routes/profile');
 const badgeRoutes = require('./routes/badges');
 
-// Mount at /api/* (your original)
+// Mount at /api/* (original)
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/challenges', challengesRoutes);
@@ -75,7 +81,7 @@ app.use('/api/expenses', expensesRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/badges', badgeRoutes);
 
-// Also mount without /api for frontend calls like /auth/login that you showed in logs
+// Also mount without /api to match current frontend calls like /auth/login
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/challenges', challengesRoutes);
