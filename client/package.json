@@ -2,9 +2,7 @@
   "name": "spendsmart-client",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": "22.x"
-  },
+  "engines": { "node": "22.x" },
   "dependencies": {
     "axios": "1.6.0",
     "es-abstract": "1.23.3",
@@ -13,7 +11,8 @@
     "react-dom": "18.2.0",
     "react-router-dom": "6.15.0",
     "react-scripts": "5.0.1",
-    "string.prototype.matchall": "4.0.10"
+    "string.prototype.matchall": "4.0.10",
+    "web-vitals": "3.5.2"
   },
   "overrides": {
     "lucide-react": "0.263.1",
@@ -28,23 +27,10 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
+  "eslintConfig": { "extends": ["react-app", "react-app/jest"] },
   "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "production": [">0.2%","not dead","not op_mini all"],
+    "development": ["last 1 chrome version","last 1 firefox version","last 1 safari version"]
   },
   "devDependencies": {
     "autoprefixer": "10.4.21",
