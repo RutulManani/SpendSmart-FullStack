@@ -27,6 +27,7 @@ const Dashboard = () => {
       
       // Fetch active challenge
       const challengeRes = await api.get('/challenges/active');
+      console.log('Active challenge:', challengeRes.data.activeChallenge);
       setActiveChallenge(challengeRes.data.activeChallenge);
       
       // Fetch recent expenses
@@ -41,16 +42,19 @@ const Dashboard = () => {
       // Fetch user badges
       try {
         const badgesRes = await api.get('/badges/my-badges');
-        console.log('Badges response:', badgesRes.data);
+        console.log('Badges API Response:', badgesRes.data);
+        console.log('Raw badges data:', badgesRes.data.badges);
         setBadges(badgesRes.data.badges || []);
       } catch (badgeError) {
         console.error('Error fetching badges:', badgeError);
+        console.log('Badge error details:', badgeError.response?.data);
         setBadges([]);
       }
       
       // Fetch streak info
       try {
         const streakRes = await api.get('/streaks/my-streak');
+        console.log('Streak data:', streakRes.data);
         setStreak(streakRes.data.currentStreak || 0);
       } catch (streakError) {
         console.error('Error fetching streak:', streakError);
@@ -106,6 +110,15 @@ const Dashboard = () => {
 
   return (
     <main className="max-w-[1400px] mx-auto p-5">
+      {/* Debug info - remove this after testing */}
+      <div className="bg-yellow-900/20 border border-yellow-500 rounded p-3 mb-4">
+        <p className="text-yellow-400 text-sm">
+          <strong>Debug Info:</strong> Badges count: {badges.length} | 
+          Streak: {streak} | 
+          Active Challenge: {activeChallenge ? 'Yes' : 'No'}
+        </p>
+      </div>
+
       {/* Badge Collection Modal */}
       {showBadges && (
         <BadgeCollection 

@@ -31,6 +31,7 @@ const Progress = ({ progress, activeChallenge, badges, streak, onViewBadges }) =
   };
 
   const earnedBadges = badges.filter(badge => badge.badgeId);
+  console.log('Earned badges in Progress component:', earnedBadges); // Debug log
 
   return (
     <section className="bg-[#2D2D2D] p-5 rounded-[10px] border border-[#444] mb-5">
@@ -68,20 +69,20 @@ const Progress = ({ progress, activeChallenge, badges, streak, onViewBadges }) =
           </div>
 
           {/* Progress Feedback */}
-          <div className="bg-[#3D3D3D] p-3 rounded border border-[#444]">
+          <div className="bg-[#3D3D3D] p-3 rounded border border-[#444] mb-4">
             <p className="text-[#E0E0E0] text-sm">
               {getProgressMessage(progress)}
             </p>
           </div>
 
-          {/* Badges Preview */}
-          {earnedBadges.length > 0 && (
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-yellow-400" />
-                  <span className="text-[#E0E0E0] font-semibold">Your Badges</span>
-                </div>
+          {/* BADGES SECTION - ALWAYS SHOW THIS */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-yellow-400" />
+                <span className="text-[#E0E0E0] font-semibold">Your Badges</span>
+              </div>
+              {earnedBadges.length > 0 && (
                 <button
                   onClick={onViewBadges}
                   className="flex items-center gap-1 text-[#B7FF00] hover:text-[#a3e600] text-sm transition-colors"
@@ -89,7 +90,17 @@ const Progress = ({ progress, activeChallenge, badges, streak, onViewBadges }) =
                   <Eye className="w-4 h-4" />
                   View All
                 </button>
+              )}
+            </div>
+            
+            {earnedBadges.length === 0 ? (
+              <div className="text-center py-4 bg-[#3D3D3D] rounded border border-[#444]">
+                <Award className="w-8 h-8 text-[#A9A9A9] mx-auto mb-2" />
+                <p className="text-[#A9A9A9] text-sm">
+                  No badges yet. Log expenses for 3 consecutive days to earn your first badge!
+                </p>
               </div>
+            ) : (
               <div className="flex gap-2 flex-wrap">
                 {earnedBadges.slice(0, 5).map((userBadge, index) => {
                   const badge = userBadge.badgeId;
@@ -116,8 +127,8 @@ const Progress = ({ progress, activeChallenge, badges, streak, onViewBadges }) =
                   </div>
                 )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       ) : (
         <div id="progress-complete" className="text-center py-4">
@@ -133,12 +144,43 @@ const Progress = ({ progress, activeChallenge, badges, streak, onViewBadges }) =
             }
           </p>
           
-          {earnedBadges.length > 0 && (
-            <div className="mt-4">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <TrendingUp className="w-5 h-5 text-green-400" />
-                <span className="text-[#E0E0E0] font-semibold">Total Badges: {earnedBadges.length}</span>
+          {/* BADGES SECTION FOR NO ACTIVE CHALLENGE */}
+          <div className="mt-4">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Award className="w-5 h-5 text-yellow-400" />
+              <span className="text-[#E0E0E0] font-semibold">Your Badges</span>
+            </div>
+            
+            {earnedBadges.length === 0 ? (
+              <div className="bg-[#3D3D3D] p-4 rounded border border-[#444] mb-4">
+                <p className="text-[#A9A9A9] text-sm mb-2">
+                  No badges earned yet.
+                </p>
+                <p className="text-[#B7FF00] text-xs">
+                  Log expenses for 3 consecutive days to earn your first badge!
+                </p>
               </div>
+            ) : (
+              <div className="flex justify-center gap-2 mb-4">
+                {earnedBadges.slice(0, 3).map((userBadge, index) => {
+                  const badge = userBadge.badgeId;
+                  if (!badge) return null;
+                  
+                  return (
+                    <div key={badge._id || index} className="relative group">
+                      <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <Award className="w-6 h-6 text-[#181818]" />
+                      </div>
+                      <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 hidden group-hover:block bg-[#181818] text-white text-xs p-2 rounded shadow-lg z-10 whitespace-nowrap">
+                        {badge.name || badge.title || `Badge ${index + 1}`}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            
+            {earnedBadges.length > 0 && (
               <button
                 onClick={onViewBadges}
                 className="px-4 py-2 bg-[#B7FF00] text-[#181818] font-semibold rounded hover:bg-[#a3e600] transition-colors flex items-center gap-2 mx-auto"
@@ -146,8 +188,8 @@ const Progress = ({ progress, activeChallenge, badges, streak, onViewBadges }) =
                 <Award className="w-4 h-4" />
                 View Badge Collection
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
