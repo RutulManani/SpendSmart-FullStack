@@ -44,23 +44,26 @@ const userSchema = new mongoose.Schema({
 // Update streak when user logs in
 userSchema.methods.updateLoginStreak = function() {
   const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+  today.setHours(0, 0, 0, 0); // Normalize to start of day
   
-  // Format dates to compare only the date part (ignore time)
-  const todayDate = today.toDateString();
-  const lastLoginDate = this.lastLoginDate ? this.lastLoginDate.toDateString() : null;
-  const yesterdayDate = yesterday.toDateString();
-  
-  if (!lastLoginDate) {
+  if (!this.lastLoginDate) {
     // First login
     this.currentStreak = 1;
-  } else if (lastLoginDate === yesterdayDate) {
-    // Consecutive day
-    this.currentStreak += 1;
-  } else if (lastLoginDate !== todayDate) {
-    // Broken streak
-    this.currentStreak = 1;
+  } else {
+    const lastLogin = new Date(this.lastLoginDate);
+    lastLogin.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (lastLogin.getTime() === yesterday.getTime()) {
+      // Consecutive day
+      this.currentStreak += 1;
+    } else if (lastLogin.getTime() !== today.getTime()) {
+      // Broken streak (not today and not yesterday)
+      this.currentStreak = 1;
+    }
+    // If lastLogin is today, streak remains the same
   }
   
   // Update longest streak if current is higher
@@ -75,21 +78,29 @@ userSchema.methods.updateLoginStreak = function() {
 // Update expense streak
 userSchema.methods.updateExpenseStreak = function() {
   const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+  today.setHours(0, 0, 0, 0); // Normalize to start of day
   
-  const todayDate = today.toDateString();
-  const lastExpenseDate = this.lastExpenseDate ? this.lastExpenseDate.toDateString() : null;
-  const yesterdayDate = yesterday.toDateString();
-  
-  if (!lastExpenseDate) {
+  if (!this.lastExpenseDate) {
+    // First expense
     this.currentStreak = 1;
-  } else if (lastExpenseDate === yesterdayDate) {
-    this.currentStreak += 1;
-  } else if (lastExpenseDate !== todayDate) {
-    this.currentStreak = 1;
+  } else {
+    const lastExpense = new Date(this.lastExpenseDate);
+    lastExpense.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (lastExpense.getTime() === yesterday.getTime()) {
+      // Consecutive day
+      this.currentStreak += 1;
+    } else if (lastExpense.getTime() !== today.getTime()) {
+      // Broken streak (not today and not yesterday)
+      this.currentStreak = 1;
+    }
+    // If lastExpense is today, streak remains the same
   }
   
+  // Update longest streak if current is higher
   if (this.currentStreak > this.longestStreak) {
     this.longestStreak = this.currentStreak;
   }

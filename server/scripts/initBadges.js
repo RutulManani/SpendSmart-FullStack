@@ -23,7 +23,8 @@ const initializeBadges = async () => {
         },
         color: '#FF6B35',
         backgroundColor: '#2D2D2D',
-        points: 10
+        points: 10,
+        isActive: true
       },
       {
         name: '7-Day Streak',
@@ -39,7 +40,8 @@ const initializeBadges = async () => {
         },
         color: '#4ECDC4',
         backgroundColor: '#2D2D2D',
-        points: 25
+        points: 25,
+        isActive: true
       },
       {
         name: '30-Day Streak',
@@ -55,7 +57,8 @@ const initializeBadges = async () => {
         },
         color: '#FFD700',
         backgroundColor: '#2D2D2D',
-        points: 100
+        points: 100,
+        isActive: true
       },
       {
         name: 'First Expense',
@@ -71,7 +74,8 @@ const initializeBadges = async () => {
         },
         color: '#45B7D1',
         backgroundColor: '#2D2D2D',
-        points: 5
+        points: 5,
+        isActive: true
       },
       {
         name: 'Challenge Champion',
@@ -87,7 +91,8 @@ const initializeBadges = async () => {
         },
         color: '#96CEB4',
         backgroundColor: '#2D2D2D',
-        points: 15
+        points: 15,
+        isActive: true
       }
     ];
 
@@ -104,6 +109,14 @@ const initializeBadges = async () => {
     }
 
     console.log('🎉 Badge initialization completed!');
+    
+    // Show all badges in database
+    const allBadges = await Badge.find({});
+    console.log(`📊 Total badges in database: ${allBadges.length}`);
+    allBadges.forEach(badge => {
+      console.log(`- ${badge.name} (${badge.rarity})`);
+    });
+    
     process.exit(0);
   } catch (error) {
     console.error('❌ Error initializing badges:', error);

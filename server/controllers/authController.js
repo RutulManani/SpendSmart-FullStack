@@ -26,15 +26,22 @@ exports.register = async (req, res) => {
     });
 
     const token = signToken(user);
+    
+    // Get user with populated badges
+    const userWithBadges = await User.findById(user._id)
+      .select('-password')
+      .populate('badges.badgeId');
+
     res.json({
       token,
       user: { 
-        _id: user._id, 
-        name: user.name, 
-        email: user.email, 
-        role: user.role,
-        currentStreak: user.currentStreak,
-        longestStreak: user.longestStreak
+        _id: userWithBadges._id, 
+        name: userWithBadges.name, 
+        email: userWithBadges.email, 
+        role: userWithBadges.role,
+        currentStreak: userWithBadges.currentStreak,
+        longestStreak: userWithBadges.longestStreak,
+        badges: userWithBadges.badges
       },
     });
   } catch (e) {
@@ -59,8 +66,10 @@ exports.login = async (req, res) => {
 
     const token = signToken(user);
     
-    // Get updated user data with streaks
-    const updatedUser = await User.findById(user._id).select('-password');
+    // Get updated user data with populated badges
+    const updatedUser = await User.findById(user._id)
+      .select('-password')
+      .populate('badges.badgeId');
     
     res.json({
       token,

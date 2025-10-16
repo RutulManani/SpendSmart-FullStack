@@ -3,7 +3,7 @@ import Challenge from '../components/Dashboard/Challenge';
 import ExpenseForm from '../components/Dashboard/ExpenseForm';
 import Progress from '../components/Dashboard/Progress';
 import SpendingHistory from '../components/Dashboard/SpendingHistory';
-import BadgeCollection from '../components/Dashboard/BadgeCollection'; // NEW
+import BadgeCollection from '../components/Dashboard/BadgeCollection';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,7 +15,7 @@ const Dashboard = () => {
   const [badges, setBadges] = useState([]);
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [showBadges, setShowBadges] = useState(false); // NEW
+  const [showBadges, setShowBadges] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -39,12 +39,23 @@ const Dashboard = () => {
       }
       
       // Fetch user badges
-      const badgesRes = await api.get('/badges/my-badges');
-      setBadges(badgesRes.data.badges || []);
+      try {
+        const badgesRes = await api.get('/badges/my-badges');
+        console.log('Badges response:', badgesRes.data);
+        setBadges(badgesRes.data.badges || []);
+      } catch (badgeError) {
+        console.error('Error fetching badges:', badgeError);
+        setBadges([]);
+      }
       
       // Fetch streak info
-      const streakRes = await api.get('/streaks/my-streak');
-      setStreak(streakRes.data.currentStreak || 0);
+      try {
+        const streakRes = await api.get('/streaks/my-streak');
+        setStreak(streakRes.data.currentStreak || 0);
+      } catch (streakError) {
+        console.error('Error fetching streak:', streakError);
+        setStreak(0);
+      }
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -123,7 +134,7 @@ const Dashboard = () => {
         activeChallenge={activeChallenge}
         badges={badges}
         streak={streak}
-        onViewBadges={() => setShowBadges(true)} // NEW
+        onViewBadges={() => setShowBadges(true)}
       />
 
       {/* Bottom Row - Spending History */}

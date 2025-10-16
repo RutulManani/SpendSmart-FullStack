@@ -33,7 +33,6 @@ const BadgeCollection = ({ badges, onClose }) => {
   };
 
   const earnedBadges = badges.filter(badge => badge.badgeId);
-  const lockedBadges = []; // You might want to fetch all available badges to show locked ones
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -62,6 +61,9 @@ const BadgeCollection = ({ badges, onClose }) => {
               <h4 className="text-lg font-semibold text-white mb-2">No Badges Yet</h4>
               <p className="text-[#A9A9A9]">
                 Start completing challenges and maintaining streaks to earn badges!
+              </p>
+              <p className="text-[#B7FF00] text-sm mt-2">
+                Log expenses for 3 consecutive days to earn your first badge!
               </p>
             </div>
           ) : (
