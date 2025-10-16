@@ -71,7 +71,7 @@ const categoriesRoutes = require('./routes/categories');
 const expensesRoutes = require('./routes/expenses');
 const profileRoutes = require('./routes/profile');
 const badgeRoutes = require('./routes/badges');
-const streakRoutes = require('./routes/streaks'); // NEW
+const streakRoutes = require('./routes/streaks');
 
 // Mount at /api/* (original)
 app.use('/api/auth', authRoutes);
@@ -81,7 +81,7 @@ app.use('/api/categories', categoriesRoutes);
 app.use('/api/expenses', expensesRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/badges', badgeRoutes);
-app.use('/api/streaks', streakRoutes); // NEW
+app.use('/api/streaks', streakRoutes);
 
 // Also mount without /api to match current frontend calls like /auth/login
 app.use('/auth', authRoutes);
@@ -91,7 +91,7 @@ app.use('/categories', categoriesRoutes);
 app.use('/expenses', expensesRoutes);
 app.use('/profile', profileRoutes);
 app.use('/badges', badgeRoutes);
-app.use('/streaks', streakRoutes); // NEW
+app.use('/streaks', streakRoutes);
 
 /* =========================
    Health & root
