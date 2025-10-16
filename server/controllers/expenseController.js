@@ -1,6 +1,7 @@
 // server/controllers/expenseController.js
 const Expense = require('../models/Expense');
 const UserChallenge = require('../models/UserChallenge');
+const { updateExpenseStreak } = require('./streakController');
 
 const clamp100 = (n) => Math.max(0, Math.min(100, n));
 const POSITIVE_MOODS = new Set(['happy', 'excited', 'relaxed']);
@@ -29,7 +30,10 @@ exports.createExpense = async (req, res) => {
       date: expenseDate,
     });
 
-    // 2) Update active challenge progress
+    // 2) Update expense streak
+    await updateExpenseStreak(req.userId);
+
+    // 3) Update active challenge progress
     let updatedUserChallenge = null;
     const uc = await UserChallenge.findOne({
       userId: req.userId,

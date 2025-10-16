@@ -3,6 +3,7 @@ import Challenge from '../components/Dashboard/Challenge';
 import ExpenseForm from '../components/Dashboard/ExpenseForm';
 import Progress from '../components/Dashboard/Progress';
 import SpendingHistory from '../components/Dashboard/SpendingHistory';
+import BadgeCollection from '../components/Dashboard/BadgeCollection'; // NEW
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,7 +13,9 @@ const Dashboard = () => {
   const [expenses, setExpenses] = useState([]);
   const [progress, setProgress] = useState(0);
   const [badges, setBadges] = useState([]);
+  const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showBadges, setShowBadges] = useState(false); // NEW
 
   useEffect(() => {
     fetchDashboardData();
@@ -35,8 +38,14 @@ const Dashboard = () => {
         setProgress(challengeRes.data.activeChallenge.progress);
       }
       
-      // Set badges from user data
-      setBadges(user?.badges || []);
+      // Fetch user badges
+      const badgesRes = await api.get('/badges/my-badges');
+      setBadges(badgesRes.data.badges || []);
+      
+      // Fetch streak info
+      const streakRes = await api.get('/streaks/my-streak');
+      setStreak(streakRes.data.currentStreak || 0);
+      
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -48,15 +57,10 @@ const Dashboard = () => {
     // Add new expense to the list
     setExpenses([expense, ...expenses.slice(0, 9)]);
     
-    // Refresh challenge data to update progress
-    if (activeChallenge) {
-      const challengeRes = await api.get('/challenges/active');
-      setActiveChallenge(challengeRes.data.activeChallenge);
-      setProgress(challengeRes.data.activeChallenge?.progress || 0);
-    }
+    // Refresh all data to update progress, badges, and streaks
+    await fetchDashboardData();
   };
 
-  // NEW: Handle expense updates
   const handleExpenseUpdated = (updatedExpense) => {
     setExpenses(prevExpenses => 
       prevExpenses.map(expense => 
@@ -65,7 +69,6 @@ const Dashboard = () => {
     );
   };
 
-  // NEW: Handle expense deletions
   const handleExpenseDeleted = (expenseId) => {
     setExpenses(prevExpenses => 
       prevExpenses.filter(expense => expense._id !== expenseId)
@@ -92,13 +95,21 @@ const Dashboard = () => {
 
   return (
     <main className="max-w-[1400px] mx-auto p-5">
+      {/* Badge Collection Modal */}
+      {showBadges && (
+        <BadgeCollection 
+          badges={badges} 
+          onClose={() => setShowBadges(false)} 
+        />
+      )}
+
       {/* Top Row - Challenge and Log Expense */}
       <div className="flex flex-col lg:flex-row gap-5 mb-5">
         <Challenge
           activeChallenge={activeChallenge}
           onChallengeStart={handleChallengeStart}
           onChallengeEnd={handleChallengeEnd}
-          streak={user?.currentStreak || 0}
+          streak={streak}
         />
         <ExpenseForm
           onExpenseAdded={handleExpenseAdded}
@@ -111,7 +122,8 @@ const Dashboard = () => {
         progress={progress}
         activeChallenge={activeChallenge}
         badges={badges}
-        streak={user?.currentStreak || 0}
+        streak={streak}
+        onViewBadges={() => setShowBadges(true)} // NEW
       />
 
       {/* Bottom Row - Spending History */}

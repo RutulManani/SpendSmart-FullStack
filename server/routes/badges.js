@@ -1,27 +1,25 @@
-// server/routes/badges.js
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const adminAuth = require('../middleware/adminAuth');
-const {
-  getAllBadges,
-  createBadge,
-  updateBadge,
-  deleteBadge,
-  getUserBadges,
-  getBadgeById
-} = require('../controllers/badgeController');
+const badgeController = require('../controllers/badgeController');
 
-// Public routes
-router.get('/', getAllBadges);
-router.get('/:id', getBadgeById);
+// Get all badges (public)
+router.get('/', badgeController.getAllBadges);
 
-// User routes
-router.get('/user/my-badges', auth, getUserBadges);
+// Get user's badges
+router.get('/my-badges', auth, badgeController.getUserBadges);
 
-// Admin routes
-router.post('/', adminAuth, createBadge);
-router.put('/:id', adminAuth, updateBadge);
-router.delete('/:id', adminAuth, deleteBadge);
+// Get badge by ID
+router.get('/:id', badgeController.getBadgeById);
+
+// Badge leaderboard
+router.get('/leaderboard/global', badgeController.getBadgeLeaderboard);
+
+// Badges by rarity
+router.get('/rarity/:rarity', badgeController.getBadgesByRarity);
+
+// Badge statistics
+router.get('/stats/overview', badgeController.getBadgeStatistics);
+router.get('/stats/me', auth, badgeController.getBadgeStats);
 
 module.exports = router;

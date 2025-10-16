@@ -1,26 +1,41 @@
-// server/models/Badge.js
 const mongoose = require('mongoose');
 
-const BadgeSchema = new mongoose.Schema(
-  {
-    name: { type: String, trim: true },
-    title: { type: String, trim: true },
-    description: { type: String, trim: true },
-    points: { type: Number, default: 0 },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+const badgeSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  title: { type: String },
+  description: { type: String },
+  icon: { type: String },
+  points: { type: Number, default: 0 },
+  
+  // Badge properties
+  rarity: { 
+    type: String, 
+    enum: ['common', 'rare', 'epic', 'legendary'], 
+    default: 'common' 
   },
-  { timestamps: true }
-);
-
-BadgeSchema.pre('validate', function (next) {
-  if (!this.name && !this.title) {
-    this.invalidate('name', 'Either name or title is required');
-  }
-  next();
+  rarityOrder: { type: Number, default: 1 },
+  
+  // Criteria for earning the badge
+  criteria: {
+    type: { 
+      type: String, 
+      enum: ['streak', 'challenges_completed', 'expenses_logged', 'savings', 'custom'],
+      required: true 
+    },
+    value: { type: Number }, // e.g., 3 for 3-day streak
+    description: { type: String }
+  },
+  
+  // Visual properties
+  color: { type: String, default: '#FFD700' },
+  backgroundColor: { type: String, default: '#2D2D2D' },
+  
+  isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
-BadgeSchema.virtual('display').get(function () {
-  return this.name || this.title || '(untitled)';
-});
+// Add index for better performance
+badgeSchema.index({ 'criteria.type': 1, 'criteria.value': 1 });
 
-module.exports = mongoose.model('Badge', BadgeSchema);
+module.exports = mongoose.model('Badge', badgeSchema);

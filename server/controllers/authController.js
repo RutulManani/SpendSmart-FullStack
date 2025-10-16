@@ -1,7 +1,7 @@
-// server/controllers/authController.js
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { updateLoginStreak } = require('./streakController');
 
 const signToken = (user) =>
   jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -28,7 +28,14 @@ exports.register = async (req, res) => {
     const token = signToken(user);
     res.json({
       token,
-      user: { _id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { 
+        _id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        role: user.role,
+        currentStreak: user.currentStreak,
+        longestStreak: user.longestStreak
+      },
     });
   } catch (e) {
     res.status(500).json({ error: 'Registration failed' });
@@ -47,10 +54,25 @@ exports.login = async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
 
+    // Update login streak
+    await updateLoginStreak(user._id);
+
     const token = signToken(user);
+    
+    // Get updated user data with streaks
+    const updatedUser = await User.findById(user._id).select('-password');
+    
     res.json({
       token,
-      user: { _id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { 
+        _id: updatedUser._id, 
+        name: updatedUser.name, 
+        email: updatedUser.email, 
+        role: updatedUser.role,
+        currentStreak: updatedUser.currentStreak,
+        longestStreak: updatedUser.longestStreak,
+        badges: updatedUser.badges
+      },
     });
   } catch {
     res.status(500).json({ error: 'Login failed' });
@@ -59,9 +81,26 @@ exports.login = async (req, res) => {
 
 exports.me = async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('-password');
+    const user = await User.findById(req.userId)
+      .select('-password')
+      .populate('badges.badgeId');
+    
     if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ user });
+    
+    res.json({ 
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profile: user.profile,
+        preferences: user.preferences,
+        currentStreak: user.currentStreak,
+        longestStreak: user.longestStreak,
+        badges: user.badges,
+        createdAt: user.createdAt
+      }
+    });
   } catch {
     res.status(500).json({ error: 'Failed to load profile' });
   }

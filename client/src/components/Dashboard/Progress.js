@@ -1,7 +1,7 @@
 import React from 'react';
-import { Award, Flame, TrendingUp } from 'lucide-react';
+import { Award, Flame, TrendingUp, Eye } from 'lucide-react';
 
-const Progress = ({ progress, activeChallenge, badges, streak }) => {
+const Progress = ({ progress, activeChallenge, badges, streak, onViewBadges }) => {
   const getProgressColor = (progress) => {
     if (progress >= 80) return 'text-green-400';
     if (progress >= 50) return 'text-yellow-400';
@@ -29,6 +29,8 @@ const Progress = ({ progress, activeChallenge, badges, streak }) => {
       return "Start logging expenses to build your progress!";
     }
   };
+
+  const earnedBadges = badges.filter(badge => badge.badgeId);
 
   return (
     <section className="bg-[#2D2D2D] p-5 rounded-[10px] border border-[#444] mb-5">
@@ -73,26 +75,44 @@ const Progress = ({ progress, activeChallenge, badges, streak }) => {
           </div>
 
           {/* Badges Preview */}
-          {badges.length > 0 && (
+          {earnedBadges.length > 0 && (
             <div className="mt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Award className="w-5 h-5 text-yellow-400" />
-                <span className="text-[#E0E0E0] font-semibold">Your Badges</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Award className="w-5 h-5 text-yellow-400" />
+                  <span className="text-[#E0E0E0] font-semibold">Your Badges</span>
+                </div>
+                <button
+                  onClick={onViewBadges}
+                  className="flex items-center gap-1 text-[#B7FF00] hover:text-[#a3e600] text-sm transition-colors"
+                >
+                  <Eye className="w-4 h-4" />
+                  View All
+                </button>
               </div>
               <div className="flex gap-2 flex-wrap">
-                {badges.slice(0, 5).map((badge, index) => (
-                  <div key={index} className="relative group">
-                    <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <Award className="w-6 h-6 text-[#181818]" />
+                {earnedBadges.slice(0, 5).map((userBadge, index) => {
+                  const badge = userBadge.badgeId;
+                  if (!badge) return null;
+                  
+                  return (
+                    <div key={badge._id || index} className="relative group">
+                      <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <Award className="w-6 h-6 text-[#181818]" />
+                      </div>
+                      <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 hidden group-hover:block bg-[#181818] text-white text-xs p-2 rounded shadow-lg z-10 whitespace-nowrap">
+                        {badge.name || badge.title || `Badge ${index + 1}`}
+                      </div>
                     </div>
-                    <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 hidden group-hover:block bg-[#181818] text-white text-xs p-2 rounded shadow-lg z-10 whitespace-nowrap">
-                      {badge.name || `Badge ${index + 1}`}
-                    </div>
-                  </div>
-                ))}
-                {badges.length > 5 && (
-                  <div className="w-10 h-10 bg-[#444] rounded-full flex items-center justify-center">
-                    <span className="text-[#E0E0E0] text-sm">+{badges.length - 5}</span>
+                  );
+                })}
+                {earnedBadges.length > 5 && (
+                  <div 
+                    className="w-10 h-10 bg-[#444] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#555] transition-colors"
+                    onClick={onViewBadges}
+                    title="View all badges"
+                  >
+                    <span className="text-[#E0E0E0] text-sm">+{earnedBadges.length - 5}</span>
                   </div>
                 )}
               </div>
@@ -113,12 +133,19 @@ const Progress = ({ progress, activeChallenge, badges, streak }) => {
             }
           </p>
           
-          {badges.length > 0 && (
+          {earnedBadges.length > 0 && (
             <div className="mt-4">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <TrendingUp className="w-5 h-5 text-green-400" />
-                <span className="text-[#E0E0E0] font-semibold">Total Badges: {badges.length}</span>
+                <span className="text-[#E0E0E0] font-semibold">Total Badges: {earnedBadges.length}</span>
               </div>
+              <button
+                onClick={onViewBadges}
+                className="px-4 py-2 bg-[#B7FF00] text-[#181818] font-semibold rounded hover:bg-[#a3e600] transition-colors flex items-center gap-2 mx-auto"
+              >
+                <Award className="w-4 h-4" />
+                View Badge Collection
+              </button>
             </div>
           )}
         </div>

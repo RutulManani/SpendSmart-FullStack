@@ -1,4 +1,3 @@
-// client/src/components/Dashboard/Challenge.js
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '../../services/api';
 import { Clock, Flame } from 'lucide-react';
@@ -94,6 +93,16 @@ const Challenge = ({ activeChallenge, onChallengeStart, onChallengeEnd, streak }
       <div className="flex items-center gap-3 mb-5">
         <img src="/images/challenge-icon.png" alt="Challenge Icon" className="w-6 h-6" />
         <h2 className="text-white font-semibold text-xl">Today's Challenge</h2>
+      </div>
+
+      {/* Streak Display - Added at the top */}
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-2">
+          <Flame className="w-5 h-5 text-orange-500" />
+          <span className="text-[#E0E0E0] text-sm">
+            Current Streak: <span className="font-semibold text-white">{streak}</span> days
+          </span>
+        </div>
       </div>
 
       {!activeChallenge && !showCompleted && (
