@@ -1,4 +1,3 @@
-// client/src/components/Admin/ManageCategories.js
 import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { Plus, Edit2, Trash2, Save, X, Tag } from 'lucide-react';
@@ -11,7 +10,7 @@ export default function ManageCategories() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ name: '', description: '', color: '' });
+  const [form, setForm] = useState({ name: '', description: '' });
 
   const fetchList = async () => {
     setLoading(true);
@@ -31,7 +30,7 @@ export default function ManageCategories() {
   }, []);
 
   const resetForm = () => {
-    setForm({ name: '', description: '', color: '' });
+    setForm({ name: '', description: '' });
     setEditingId(null);
   };
 
@@ -41,9 +40,8 @@ export default function ManageCategories() {
 
     const payload = {
       name: form.name,
-      title: form.name, // to be safe with either schema
+      title: form.name,
       description: form.description || undefined,
-      color: form.color || undefined,
     };
 
     try {
@@ -65,7 +63,6 @@ export default function ManageCategories() {
     setForm({
       name: item.name || item.title || '',
       description: item.description || '',
-      color: item.color || '',
     });
   };
 
@@ -87,7 +84,7 @@ export default function ManageCategories() {
 
         {err && <div className="text-red-400 mb-3">{err}</div>}
 
-        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <label className="flex flex-col gap-2">
             <span className="text-sm text-gray-300">Name *</span>
             <input
@@ -100,27 +97,17 @@ export default function ManageCategories() {
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm text-gray-300">Color (optional)</span>
-            <input
-              className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
-              value={form.color}
-              onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
-              placeholder="#FFAA00"
-            />
-          </label>
-
-          <label className="flex flex-col gap-2 md:col-span-2">
             <span className="text-sm text-gray-300">Description</span>
             <textarea
               className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               rows={3}
-              placeholder="Short description..."
+              placeholder="Short description of the category..."
             />
           </label>
 
-          <div className="flex gap-3 items-center md:col-span-2">
+          <div className="flex gap-3 items-center">
             <button
               type="submit"
               className="inline-flex items-center gap-2 bg-lime-400/90 hover:bg-lime-400 text-black font-semibold px-4 py-2 rounded"

@@ -95,16 +95,6 @@ const Challenge = ({ activeChallenge, onChallengeStart, onChallengeEnd, streak }
         <h2 className="text-white font-semibold text-xl">Today's Challenge</h2>
       </div>
 
-      {/* Streak Display - Added at the top */}
-      <div className="flex items-center gap-4 mb-4">
-        <div className="flex items-center gap-2">
-          <Flame className="w-5 h-5 text-orange-500" />
-          <span className="text-[#E0E0E0] text-sm">
-            Current Streak: <span className="font-semibold text-white">{streak}</span> days
-          </span>
-        </div>
-      </div>
-
       {!activeChallenge && !showCompleted && (
         <div id="challenge-container">
           <p className="text-[#E0E0E0] mb-5">

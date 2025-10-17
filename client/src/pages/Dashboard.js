@@ -110,14 +110,6 @@ const Dashboard = () => {
 
   return (
     <main className="max-w-[1400px] mx-auto p-5">
-      {/* Debug info - remove this after testing */}
-      <div className="bg-yellow-900/20 border border-yellow-500 rounded p-3 mb-4">
-        <p className="text-yellow-400 text-sm">
-          <strong>Debug Info:</strong> Badges count: {badges.length} | 
-          Streak: {streak} | 
-          Active Challenge: {activeChallenge ? 'Yes' : 'No'}
-        </p>
-      </div>
 
       {/* Badge Collection Modal */}
       {showBadges && (

@@ -1,4 +1,3 @@
-// client/src/components/Admin/ManageChallenges.js
 import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
@@ -7,16 +6,13 @@ const displayName = (o) => o?.title || o?.name || o?.label || '(untitled)';
 const normalize = (data) => (Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : []);
 
 export default function ManageChallenges() {
-  const [items, setItems] = useState([]);         // list
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     title: '',
     description: '',
-    target: '',
-    startDate: '',
-    endDate: '',
     isActive: true,
   });
 
@@ -38,7 +34,7 @@ export default function ManageChallenges() {
   }, []);
 
   const resetForm = () => {
-    setForm({ title: '', description: '', target: '', startDate: '', endDate: '', isActive: true });
+    setForm({ title: '', description: '', isActive: true });
     setEditingId(null);
   };
 
@@ -50,9 +46,6 @@ export default function ManageChallenges() {
       title: form.title,
       name: form.title,
       description: form.description,
-      target: form.target ? Number(form.target) : undefined,
-      startDate: form.startDate || undefined,
-      endDate: form.endDate || undefined,
       isActive: !!form.isActive,
     };
 
@@ -75,9 +68,6 @@ export default function ManageChallenges() {
     setForm({
       title: item.title || item.name || '',
       description: item.description || '',
-      target: item.target ?? '',
-      startDate: item.startDate ? String(item.startDate).substring(0, 10) : '',
-      endDate: item.endDate ? String(item.endDate).substring(0, 10) : '',
       isActive: item.isActive ?? true,
     });
   };
@@ -103,7 +93,7 @@ export default function ManageChallenges() {
 
         {err && <div className="text-red-400 mb-3">{err}</div>}
 
-        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <label className="flex flex-col gap-2">
             <span className="text-sm text-gray-300">Title *</span>
             <input
@@ -116,44 +106,13 @@ export default function ManageChallenges() {
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm text-gray-300">Target (number)</span>
-            <input
-              type="number"
-              className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
-              value={form.target}
-              onChange={(e) => setForm((f) => ({ ...f, target: e.target.value }))}
-              placeholder="e.g., 7"
-            />
-          </label>
-
-          <label className="flex flex-col gap-2 md:col-span-2">
             <span className="text-sm text-gray-300">Description</span>
             <textarea
               className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              placeholder="Short description..."
+              placeholder="Short description of the challenge..."
               rows={3}
-            />
-          </label>
-
-          <label className="flex flex-col gap-2">
-            <span className="text-sm text-gray-300">Start Date</span>
-            <input
-              type="date"
-              className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
-              value={form.startDate}
-              onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
-            />
-          </label>
-
-          <label className="flex flex-col gap-2">
-            <span className="text-sm text-gray-300">End Date</span>
-            <input
-              type="date"
-              className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
-              value={form.endDate}
-              onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
             />
           </label>
 
@@ -166,7 +125,7 @@ export default function ManageChallenges() {
             <span className="text-sm text-gray-300">Active</span>
           </label>
 
-          <div className="flex gap-3 items-center md:col-span-2">
+          <div className="flex gap-3 items-center">
             <button
               type="submit"
               className="inline-flex items-center gap-2 bg-lime-400/90 hover:bg-lime-400 text-black font-semibold px-4 py-2 rounded"
@@ -204,6 +163,11 @@ export default function ManageChallenges() {
                   {item.description && (
                     <div className="text-sm text-gray-400">{item.description}</div>
                   )}
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-xs px-2 py-1 rounded ${item.isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                      {item.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
