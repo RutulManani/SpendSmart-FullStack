@@ -1,4 +1,3 @@
-// server/controllers/expenseController.js
 const Expense = require('../models/Expense');
 const UserChallenge = require('../models/UserChallenge');
 
@@ -13,7 +12,7 @@ exports.createExpense = async (req, res) => {
       return res.status(400).json({ error: 'Amount must be a positive number' });
     }
 
-    // Handle date properly - FIXED timezone issue
+    // Handle date properly
     let expenseDate = new Date();
     if (date) {
       const parsed = new Date(date);
@@ -103,7 +102,7 @@ exports.updateExpense = async (req, res) => {
       return res.status(404).json({ error: 'Expense not found' });
     }
 
-    // Handle date properly - FIXED timezone issue
+    // Handle date properly
     let expenseDate = expense.date;
     if (date) {
       const parsed = new Date(date);

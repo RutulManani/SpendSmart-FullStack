@@ -1,4 +1,3 @@
-// client/src/components/Dashboard/SpendingHistory.js
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Filter, Calendar, Edit2, Trash2, Save, X } from 'lucide-react';
 import api from '../../services/api';
@@ -141,7 +140,6 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
 
     setLoading(true);
     try {
-      // Convert local datetime to ISO string for backend - FIXED timezone issue
       const localDate = new Date(editForm.dateTime);
       const isoDate = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString();
 

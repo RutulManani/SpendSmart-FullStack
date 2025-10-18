@@ -1,4 +1,3 @@
-// client/src/components/Admin/ManageBadges.js
 import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { Plus, Edit2, Trash2, Save, X, Award } from 'lucide-react';
@@ -11,7 +10,14 @@ export default function ManageBadges() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ name: '', description: '', points: '' });
+  const [form, setForm] = useState({ 
+    name: '', 
+    description: '', 
+    points: '',
+    criteriaType: 'custom',
+    criteriaValue: '',
+    rarity: 'common'
+  });
 
   const fetchList = async () => {
     setLoading(true);
@@ -31,7 +37,14 @@ export default function ManageBadges() {
   }, []);
 
   const resetForm = () => {
-    setForm({ name: '', description: '', points: '' });
+    setForm({ 
+      name: '', 
+      description: '', 
+      points: '',
+      criteriaType: 'custom',
+      criteriaValue: '',
+      rarity: 'common'
+    });
     setEditingId(null);
   };
 
@@ -44,15 +57,21 @@ export default function ManageBadges() {
       title: form.name,
       description: form.description || undefined,
       points: form.points ? Number(form.points) : undefined,
+      rarity: form.rarity,
+      criteria: {
+        type: form.criteriaType,
+        value: form.criteriaValue ? Number(form.criteriaValue) : 0,
+        description: form.description || undefined
+      }
     };
 
     try {
       if (editingId) {
         const { data } = await api.put(`/admin/badges/${editingId}`, payload);
-        setItems((prev) => prev.map((x) => (x._id === editingId ? data : x)));
+        setItems((prev) => prev.map((x) => (x._id === editingId ? data.badge : x)));
       } else {
         const { data } = await api.post('/admin/badges', payload);
-        setItems((prev) => [data, ...prev]);
+        setItems((prev) => [data.badge, ...prev]);
       }
       resetForm();
     } catch (e) {
@@ -66,6 +85,9 @@ export default function ManageBadges() {
       name: item.name || item.title || '',
       description: item.description || '',
       points: item.points ?? '',
+      criteriaType: item.criteria?.type || 'custom',
+      criteriaValue: item.criteria?.value || '',
+      rarity: item.rarity || 'common'
     });
   };
 
@@ -107,6 +129,47 @@ export default function ManageBadges() {
               value={form.points}
               onChange={(e) => setForm((f) => ({ ...f, points: e.target.value }))}
               placeholder="e.g., 100"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-sm text-gray-300">Rarity</span>
+            <select
+              className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
+              value={form.rarity}
+              onChange={(e) => setForm((f) => ({ ...f, rarity: e.target.value }))}
+            >
+              <option value="common">Common</option>
+              <option value="rare">Rare</option>
+              <option value="epic">Epic</option>
+              <option value="legendary">Legendary</option>
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-sm text-gray-300">Criteria Type *</span>
+            <select
+              className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
+              value={form.criteriaType}
+              onChange={(e) => setForm((f) => ({ ...f, criteriaType: e.target.value }))}
+              required
+            >
+              <option value="custom">Custom</option>
+              <option value="streak">Streak</option>
+              <option value="challenges_completed">Challenges Completed</option>
+              <option value="expenses_logged">Expenses Logged</option>
+              <option value="savings">Savings</option>
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-sm text-gray-300">Criteria Value</span>
+            <input
+              type="number"
+              className="bg-[#2b2b2b] border border-[#444] rounded px-3 py-2 text-white"
+              value={form.criteriaValue}
+              onChange={(e) => setForm((f) => ({ ...f, criteriaValue: e.target.value }))}
+              placeholder="e.g., 7 (for 7-day streak)"
             />
           </label>
 
@@ -160,6 +223,10 @@ export default function ManageBadges() {
                     {item.description && (
                       <div className="text-sm text-gray-400">{item.description}</div>
                     )}
+                    <div className="text-xs text-gray-500">
+                      {item.criteria?.type && `Criteria: ${item.criteria.type}`}
+                      {item.criteria?.value && ` (${item.criteria.value})`}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

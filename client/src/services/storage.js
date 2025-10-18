@@ -1,5 +1,3 @@
-// Local Storage utility functions for SpendSmart
-
 const STORAGE_KEYS = {
   TOKEN: 'token',
   USER: 'user',

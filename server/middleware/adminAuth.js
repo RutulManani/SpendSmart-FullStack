@@ -1,4 +1,3 @@
-// server/middleware/adminAuth.js
 const auth = require('./auth');
 
 module.exports = function adminAuth(req, res, next) {

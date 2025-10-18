@@ -1,4 +1,3 @@
-// client/src/pages/Profile.js
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -119,7 +118,7 @@ const Profile = () => {
       
       // Update auth context if name changed
       if (response.data.user.name !== authUser.name) {
-        window.location.reload(); // Simple way to refresh auth context
+        window.location.reload();
       }
     } catch (error) {
       console.error('Error updating profile:', error);

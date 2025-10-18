@@ -1,4 +1,3 @@
-// server/models/Expense.js
 const mongoose = require('mongoose');
 
 const ExpenseSchema = new mongoose.Schema(
@@ -13,7 +12,7 @@ const ExpenseSchema = new mongoose.Schema(
       default: 'neutral',
     },
     category: { type: String, trim: true, default: 'other' },
-    date: { type: Date, default: Date.now }, // NEW: expense date/time
+    date: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

@@ -1,4 +1,3 @@
-// client/src/components/Admin/ManageUsers.js
 import React, { useEffect, useState, useCallback } from 'react'
 import api from '../../services/api'
 import {

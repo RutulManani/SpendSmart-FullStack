@@ -142,11 +142,28 @@ exports.getBadgeStats = async (req, res) => {
 // POST /api/badges  (admin)
 exports.createBadge = async (req, res) => {
   try {
-    const badge = new Badge(req.body);
+    // Set default criteria if not provided
+    const badgeData = {
+      ...req.body,
+      criteria: req.body.criteria || { type: 'custom', value: 0 }
+    };
+
+    // Set rarity order based on rarity
+    const rarityOrderMap = { common: 1, rare: 2, epic: 3, legendary: 4 };
+    badgeData.rarityOrder = rarityOrderMap[badgeData.rarity] || 1;
+
+    const badge = new Badge(badgeData);
     await badge.save();
     res.status(201).json({ message: 'Badge created successfully', badge });
   } catch (error) {
     console.error('Create badge error:', error);
+    
+    // Handle validation errors specifically
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ error: errors.join(', ') });
+    }
+    
     res.status(500).json({ error: 'Error creating badge' });
   }
 };
@@ -155,11 +172,30 @@ exports.createBadge = async (req, res) => {
 exports.updateBadge = async (req, res) => {
   try {
     const { id } = req.params;
-    const badge = await Badge.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    
+    // Set rarity order if rarity is being updated
+    if (req.body.rarity) {
+      const rarityOrderMap = { common: 1, rare: 2, epic: 3, legendary: 4 };
+      req.body.rarityOrder = rarityOrderMap[req.body.rarity] || 1;
+    }
+
+    const badge = await Badge.findByIdAndUpdate(
+      id, 
+      { ...req.body, updatedAt: new Date() }, 
+      { new: true, runValidators: true }
+    );
+    
     if (!badge) return res.status(404).json({ error: 'Badge not found' });
     res.json({ message: 'Badge updated successfully', badge });
   } catch (error) {
     console.error('Update badge error:', error);
+    
+    // Handle validation errors specifically
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ error: errors.join(', ') });
+    }
+    
     res.status(500).json({ error: 'Error updating badge' });
   }
 };

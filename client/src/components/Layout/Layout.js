@@ -35,7 +35,7 @@ const Layout = ({ children }) => {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* GitHub icon linking to your profile */}
+              {/* GitHub icon linking to my profile */}
               <a
                 href="https://github.com/RutulManani"
                 target="_blank"

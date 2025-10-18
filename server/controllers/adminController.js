@@ -1,4 +1,3 @@
-// server/controllers/adminController.js
 const User = require('../models/User');
 const Category = require('../models/Category');
 const Challenge = require('../models/Challenge');

@@ -31,7 +31,7 @@ const Progress = ({ progress, activeChallenge, badges, streak, onViewBadges }) =
   };
 
   const earnedBadges = badges.filter(badge => badge.badgeId);
-  console.log('Earned badges in Progress component:', earnedBadges); // Debug log
+  console.log('Earned badges in Progress component:', earnedBadges);
 
   return (
     <section className="bg-[#2D2D2D] p-5 rounded-[10px] border border-[#444] mb-5">
@@ -75,7 +75,7 @@ const Progress = ({ progress, activeChallenge, badges, streak, onViewBadges }) =
             </p>
           </div>
 
-          {/* BADGES SECTION - ALWAYS SHOW THIS */}
+          {/* BADGES SECTION */}
           <div className="mt-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">

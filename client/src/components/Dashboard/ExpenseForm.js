@@ -1,4 +1,3 @@
-// client/src/components/Dashboard/ExpenseForm.js
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 
@@ -77,7 +76,6 @@ const ExpenseForm = ({ onExpenseAdded, hasActiveChallenge }) => {
 
     setLoading(true);
     try {
-      // Convert local datetime to ISO string for backend - FIXED timezone issue
       const localDate = new Date(dateTime);
       const isoDate = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString();
 

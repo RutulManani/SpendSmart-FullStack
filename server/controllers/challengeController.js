@@ -1,4 +1,3 @@
-// server/controllers/challengeController.js
 const mongoose = require('mongoose');
 const Challenge = require('../models/Challenge');
 const UserChallenge = require('../models/UserChallenge');
