@@ -139,7 +139,7 @@ exports.getBadgeStats = async (req, res) => {
   }
 };
 
-// POST /api/badges  (admin)
+// POST /api/admin/badges  (admin)
 exports.createBadge = async (req, res) => {
   try {
     // Set default criteria if not provided
@@ -154,7 +154,12 @@ exports.createBadge = async (req, res) => {
 
     const badge = new Badge(badgeData);
     await badge.save();
-    res.status(201).json({ message: 'Badge created successfully', badge });
+    
+    // Return the complete badge object
+    res.status(201).json({ 
+      message: 'Badge created successfully', 
+      badge: badge.toObject() 
+    });
   } catch (error) {
     console.error('Create badge error:', error);
     
@@ -168,7 +173,7 @@ exports.createBadge = async (req, res) => {
   }
 };
 
-// PUT /api/badges/:id  (admin)
+// PUT /api/admin/badges/:id  (admin)
 exports.updateBadge = async (req, res) => {
   try {
     const { id } = req.params;
@@ -186,7 +191,11 @@ exports.updateBadge = async (req, res) => {
     );
     
     if (!badge) return res.status(404).json({ error: 'Badge not found' });
-    res.json({ message: 'Badge updated successfully', badge });
+    
+    res.json({ 
+      message: 'Badge updated successfully', 
+      badge: badge.toObject() 
+    });
   } catch (error) {
     console.error('Update badge error:', error);
     
@@ -210,6 +219,17 @@ exports.deleteBadge = async (req, res) => {
   } catch (error) {
     console.error('Delete badge error:', error);
     res.status(500).json({ error: 'Error deleting badge' });
+  }
+};
+
+// GET /api/admin/badges  (admin)
+exports.getAdminBadges = async (req, res) => {
+  try {
+    const badges = await Badge.find({}).sort({ createdAt: -1 });
+    res.json(badges); // Return array directly for admin
+  } catch (error) {
+    console.error('Get admin badges error:', error);
+    res.status(500).json({ error: 'Error fetching badges' });
   }
 };
 

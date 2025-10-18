@@ -1,9 +1,10 @@
+// client/src/components/Admin/ManageBadges.js
 import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { Plus, Edit2, Trash2, Save, X, Award } from 'lucide-react';
 
 const displayName = (o) => o?.name || o?.title || o?.label || '(untitled)';
-const normalize = (data) => (Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : []);
+const normalize = (data) => (Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : Array.isArray(data?.badges) ? data.badges : []);
 
 export default function ManageBadges() {
   const [items, setItems] = useState([]);
@@ -24,7 +25,10 @@ export default function ManageBadges() {
     setErr('');
     try {
       const { data } = await api.get('/admin/badges');
-      setItems(normalize(data));
+      console.log('Badges API Response:', data); // Debug log
+      const normalizedItems = normalize(data);
+      console.log('Normalized badges:', normalizedItems); // Debug log
+      setItems(normalizedItems);
     } catch (e) {
       setErr(e?.response?.data?.error || 'Failed to load badges');
     } finally {
@@ -66,20 +70,28 @@ export default function ManageBadges() {
     };
 
     try {
+      let response;
       if (editingId) {
-        const { data } = await api.put(`/admin/badges/${editingId}`, payload);
-        setItems((prev) => prev.map((x) => (x._id === editingId ? data.badge : x)));
+        response = await api.put(`/admin/badges/${editingId}`, payload);
+        console.log('Update response:', response.data); // Debug log
+        const updatedBadge = response.data.badge || response.data;
+        setItems((prev) => prev.map((x) => (x._id === editingId ? updatedBadge : x)));
       } else {
-        const { data } = await api.post('/admin/badges', payload);
-        setItems((prev) => [data.badge, ...prev]);
+        response = await api.post('/admin/badges', payload);
+        console.log('Create response:', response.data); // Debug log
+        const newBadge = response.data.badge || response.data;
+        setItems((prev) => [newBadge, ...prev]);
       }
       resetForm();
     } catch (e) {
+      console.error('Save error:', e); // Debug log
       setErr(e?.response?.data?.error || 'Save failed');
     }
   };
 
   const onEdit = (item) => {
+    if (!item) return;
+    
     setEditingId(item._id);
     setForm({
       name: item.name || item.title || '',
@@ -95,11 +107,51 @@ export default function ManageBadges() {
     if (!window.confirm('Delete this badge?')) return;
     try {
       await api.delete(`/admin/badges/${id}`);
-      setItems((prev) => prev.filter((x) => x._id !== id));
+      setItems((prev) => prev.filter((x) => x && x._id !== id));
       if (editingId === id) resetForm();
     } catch (e) {
       setErr(e?.response?.data?.error || 'Delete failed');
     }
+  };
+
+  // Safe rendering function
+  const renderBadgeItem = (item, index) => {
+    if (!item) {
+      console.warn('Undefined badge item at index:', index);
+      return null;
+    }
+
+    return (
+      <li key={item._id || index} className="py-3 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <Award className="w-4 h-4 text-purple-400" />
+          <div>
+            <div className="text-white font-medium">{displayName(item)}</div>
+            {item.description && (
+              <div className="text-sm text-gray-400">{item.description}</div>
+            )}
+            <div className="text-xs text-gray-500">
+              {item.criteria?.type && `Criteria: ${item.criteria.type}`}
+              {item.criteria?.value && ` (${item.criteria.value})`}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onEdit(item)}
+            className="p-2 rounded bg-[#2b2b2b] border border-[#444] text-gray-200 hover:text-white"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(item._id)}
+            className="p-2 rounded bg-[#2b2b2b] border border-[#444] text-red-300 hover:text-red-400"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </li>
+    );
   };
 
   return (
@@ -214,37 +266,7 @@ export default function ManageBadges() {
           <div className="text-gray-400">No badges yet.</div>
         ) : (
           <ul className="divide-y divide-[#333]">
-            {items.map((item) => (
-              <li key={item._id} className="py-3 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <Award className="w-4 h-4 text-purple-400" />
-                  <div>
-                    <div className="text-white font-medium">{displayName(item)}</div>
-                    {item.description && (
-                      <div className="text-sm text-gray-400">{item.description}</div>
-                    )}
-                    <div className="text-xs text-gray-500">
-                      {item.criteria?.type && `Criteria: ${item.criteria.type}`}
-                      {item.criteria?.value && ` (${item.criteria.value})`}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onEdit(item)}
-                    className="p-2 rounded bg-[#2b2b2b] border border-[#444] text-gray-200 hover:text-white"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => onDelete(item._id)}
-                    className="p-2 rounded bg-[#2b2b2b] border border-[#444] text-red-300 hover:text-red-400"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </li>
-            ))}
+            {items.filter(item => item).map(renderBadgeItem)}
           </ul>
         )}
       </div>
