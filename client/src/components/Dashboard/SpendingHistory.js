@@ -1,4 +1,3 @@
-// client/src/components/Dashboard/SpendingHistory.js
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Filter, Calendar, Edit2, Trash2, Save, X } from 'lucide-react';
 import api from '../../services/api';
@@ -40,7 +39,8 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
   };
 
   const getDateObj = (expense) => {
-    const raw = expense?.date || expense?.createdAt || expense?.updatedAt;
+    // Prioritize the date field, fallback to createdAt
+    const raw = expense?.date || expense?.createdAt;
     const d = raw ? new Date(raw) : null;
     return d && !isNaN(d.getTime()) ? d : null;
   };
@@ -48,17 +48,27 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
   const formatDate = (expense) => {
     const d = getDateObj(expense);
     if (!d) return '-';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return d.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      timeZone: 'UTC' // Use UTC to avoid timezone shifts
+    });
   };
 
   const formatTime = (expense) => {
     const d = getDateObj(expense);
     if (!d) return '-';
-    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      timeZone: 'UTC' // Use UTC to avoid timezone shifts
+    });
   };
 
   // Helper: convert Date -> "YYYY-MM-DDTHH:mm" for <input type="datetime-local">
   const toLocalInputValue = (d) => {
+    if (!d) return '';
     const pad = (n) => String(n).padStart(2, '0');
     const yyyy = d.getFullYear();
     const mm = pad(d.getMonth() + 1);
@@ -82,7 +92,7 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
       if (sortBy === 'date') {
         const da = getDateObj(a)?.getTime() || 0;
         const db = getDateObj(b)?.getTime() || 0;
-        return db - da;
+        return db - da; // Newest first
       } else if (sortBy === 'amount') {
         return b.amount - a.amount;
       } else if (sortBy === 'category') {
@@ -91,17 +101,18 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
       return 0;
     });
 
-  const categories = [...new Set(expenses.map(expense => expense.category))];
+  const categories = [...new Set(expenses.map(expense => expense.category))].filter(Boolean);
   const totalSpent = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
   const averageSpent = expenses.length > 0 ? totalSpent / expenses.length : 0;
 
   const handleEdit = (expense) => {
     setEditingId(expense._id);
+    const dateObj = getDateObj(expense);
     setEditForm({
       amount: expense.amount,
       mood: expense.mood,
       category: expense.category,
-      dateTime: toLocalInputValue(getDateObj(expense) || new Date())
+      dateTime: toLocalInputValue(dateObj)
     });
   };
 
@@ -132,7 +143,7 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
       const response = await api.put(`/expenses/${expenseId}`, {
         amount: parseFloat(editForm.amount),
         mood: editForm.mood,
-        category: editForm.category,
+        category: editForm.category.toLowerCase(), // Ensure lowercase for consistency
         date: isoDate,
       });
 
@@ -152,7 +163,6 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
   };
 
   const handleDelete = async (expenseId) => {
-    // Confirmation dialog before deletion
     if (!window.confirm('Are you sure you want to delete this expense? This action cannot be undone.')) {
       return;
     }
@@ -235,9 +245,9 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="bg-[#3D3D3D] border border-[#444] text-[#E0E0E0] rounded px-3 py-2 text-sm"
               >
-                <option value="date">Sort by Date</option>
-                <option value="amount">Sort by Amount</option>
-                <option value="category">Sort by Category</option>
+                <option value="date">Sort by Date (Newest First)</option>
+                <option value="amount">Sort by Amount (High to Low)</option>
+                <option value="category">Sort by Category (A-Z)</option>
               </select>
             </div>
           </div>
@@ -346,7 +356,7 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
                             </span>
                             <div>
                               <p className="text-white font-medium capitalize">
-                                {expense.category}
+                                {expense.category || 'Uncategorized'}
                               </p>
                               <p className={`text-sm capitalize ${getMoodColor(expense.mood)}`}>
                                 {expense.mood}

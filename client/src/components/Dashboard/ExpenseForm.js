@@ -1,4 +1,3 @@
-// client/src/components/Dashboard/ExpenseForm.js
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 
@@ -6,7 +5,7 @@ const ExpenseForm = ({ onExpenseAdded, hasActiveChallenge }) => {
   const [amount, setAmount] = useState('');
   const [mood, setMood] = useState('');
   const [category, setCategory] = useState('');
-  const [dateTime, setDateTime] = useState(''); // NEW
+  const [dateTime, setDateTime] = useState('');
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +26,7 @@ const ExpenseForm = ({ onExpenseAdded, hasActiveChallenge }) => {
   };
 
   useEffect(() => {
-    // default to "now" in the user’s local time
+    // default to "now" in the user's local time
     setDateTime(toLocalInputValue(new Date()));
   }, []);
 
@@ -38,6 +37,7 @@ const ExpenseForm = ({ onExpenseAdded, hasActiveChallenge }) => {
   const fetchCategories = async () => {
     try {
       const res = await api.get('/categories');
+      console.log('Categories API response:', res.data); // Debug log
 
       const list = Array.isArray(res.data?.categories)
         ? res.data.categories
@@ -45,24 +45,39 @@ const ExpenseForm = ({ onExpenseAdded, hasActiveChallenge }) => {
         ? res.data
         : [];
 
-      setCategories(
-        list.length
-          ? list
-          : [
-              { _id: 'food', name: 'food' },
-              { _id: 'entertainment', name: 'entertainment' },
-              { _id: 'shopping', name: 'shopping' },
-              { _id: 'other', name: 'other' },
-            ]
-      );
+      console.log('Processed categories list:', list); // Debug log
+
+      // Use the categories from the database, fallback to defaults only if empty
+      if (list.length > 0) {
+        setCategories(list);
+      } else {
+        // Fallback categories
+        const fallbackCategories = [
+          { _id: 'food', name: 'Food' },
+          { _id: 'entertainment', name: 'Entertainment' },
+          { _id: 'shopping', name: 'Shopping' },
+          { _id: 'transport', name: 'Transport' },
+          { _id: 'bills', name: 'Bills' },
+          { _id: 'health', name: 'Health' },
+          { _id: 'education', name: 'Education' },
+          { _id: 'other', name: 'Other' }
+        ];
+        setCategories(fallbackCategories);
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
-      setCategories([
-        { _id: 'food', name: 'food' },
-        { _id: 'entertainment', name: 'entertainment' },
-        { _id: 'shopping', name: 'shopping' },
-        { _id: 'other', name: 'other' },
-      ]);
+      // Fallback categories on error
+      const fallbackCategories = [
+        { _id: 'food', name: 'Food' },
+        { _id: 'entertainment', name: 'Entertainment' },
+        { _id: 'shopping', name: 'Shopping' },
+        { _id: 'transport', name: 'Transport' },
+        { _id: 'bills', name: 'Bills' },
+        { _id: 'health', name: 'Health' },
+        { _id: 'education', name: 'Education' },
+        { _id: 'other', name: 'Other' }
+      ];
+      setCategories(fallbackCategories);
     }
   };
 
@@ -83,12 +98,16 @@ const ExpenseForm = ({ onExpenseAdded, hasActiveChallenge }) => {
       // Convert local datetime to ISO string for backend
       const isoDate = new Date(dateTime).toISOString();
 
+      console.log('Submitting expense with category:', category); // Debug log
+
       const response = await api.post('/expenses', {
         amount: parseFloat(amount),
         mood,
-        category,
-        date: isoDate, // NEW
+        category: category.toLowerCase(), // Ensure lowercase for consistency
+        date: isoDate,
       });
+
+      console.log('Expense created:', response.data.expense); // Debug log
 
       onExpenseAdded(response.data.expense);
 
@@ -98,6 +117,7 @@ const ExpenseForm = ({ onExpenseAdded, hasActiveChallenge }) => {
       setDateTime(toLocalInputValue(new Date()));
       alert('Expense logged successfully!');
     } catch (error) {
+      console.error('Error creating expense:', error);
       alert(error.response?.data?.error || 'Failed to log expense');
     } finally {
       setLoading(false);
@@ -168,7 +188,6 @@ const ExpenseForm = ({ onExpenseAdded, hasActiveChallenge }) => {
           ))}
         </select>
 
-        {/* NEW: Date & Time */}
         <label htmlFor="dateTime" className="block mb-2 text-[#A9A9A9] text-sm">
           Date &amp; Time:
         </label>

@@ -1,4 +1,3 @@
-// server/controllers/expenseController.js
 const Expense = require('../models/Expense');
 const UserChallenge = require('../models/UserChallenge');
 const { updateExpenseStreak } = require('./streakController');
@@ -14,21 +13,27 @@ exports.createExpense = async (req, res) => {
       return res.status(400).json({ error: 'Amount must be a positive number' });
     }
 
-    // Normalize date (optional from client); fallback to now
+    // Normalize date - use provided date or current time
     let expenseDate = new Date();
     if (date) {
       const parsed = new Date(date);
-      if (!isNaN(parsed.getTime())) expenseDate = parsed;
+      if (!isNaN(parsed.getTime())) {
+        expenseDate = parsed;
+      }
     }
+
+    console.log('Creating expense with category:', category); // Debug log
 
     // 1) Save the expense
     const expense = await Expense.create({
       userId: req.userId,
       amount: Number(amount),
       mood: (mood || 'neutral').toLowerCase(),
-      category: (category || 'other').toLowerCase(),
+      category: (category || 'other').toLowerCase().trim(), // Ensure lowercase and trim
       date: expenseDate,
     });
+
+    console.log('Expense created:', expense); // Debug log
 
     // 2) Update expense streak
     await updateExpenseStreak(req.userId);
@@ -52,7 +57,8 @@ exports.createExpense = async (req, res) => {
     }
 
     const obj = expense.toObject();
-    obj.date = obj.date || obj.createdAt; // ensure client always has a date
+    // Ensure date is always available
+    obj.date = obj.date || obj.createdAt;
 
     res.status(201).json({ expense: obj, userChallenge: updatedUserChallenge });
   } catch (e) {
@@ -67,10 +73,13 @@ exports.listExpenses = async (req, res) => {
     const docs = await Expense.find({ userId: req.userId })
       .sort({ date: -1, createdAt: -1 });
 
-    // Ensure each item includes a `date`
+    console.log('Found expenses:', docs.length); // Debug log
+
+    // Ensure each item includes a proper date
     const expenses = docs.map((d) => {
       const obj = d.toObject();
       obj.date = obj.date || obj.createdAt;
+      console.log('Expense category:', obj.category); // Debug log
       return obj;
     });
 
@@ -81,7 +90,7 @@ exports.listExpenses = async (req, res) => {
   }
 };
 
-// NEW: Update expense
+// Update expense
 exports.updateExpense = async (req, res) => {
   try {
     const { id } = req.params;
@@ -89,7 +98,6 @@ exports.updateExpense = async (req, res) => {
 
     console.log('UPDATE EXPENSE - ID:', id);
     console.log('UPDATE EXPENSE - Body:', { amount, mood, category, date });
-    console.log('UPDATE EXPENSE - User ID:', req.userId);
 
     // Validate amount
     if (amount == null || Number.isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -113,7 +121,7 @@ exports.updateExpense = async (req, res) => {
     // Update expense
     expense.amount = Number(amount);
     expense.mood = (mood || 'neutral').toLowerCase();
-    expense.category = (category || 'other').toLowerCase();
+    expense.category = (category || 'other').toLowerCase().trim(); // Ensure lowercase and trim
     expense.date = expenseDate;
 
     await expense.save();
@@ -129,13 +137,12 @@ exports.updateExpense = async (req, res) => {
   }
 };
 
-// NEW: Delete expense
+// Delete expense
 exports.deleteExpense = async (req, res) => {
   try {
     const { id } = req.params;
     
     console.log('DELETE EXPENSE - ID:', id);
-    console.log('DELETE EXPENSE - User ID:', req.userId);
 
     // Find expense and verify ownership
     const expense = await Expense.findOne({ _id: id, userId: req.userId });
