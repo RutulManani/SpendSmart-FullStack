@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// client/src/components/Dashboard/SpendingHistory.js
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Filter, Calendar, Edit2, Trash2, Save, X } from 'lucide-react';
 import api from '../../services/api';
 
@@ -9,6 +10,28 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  // Fetch current categories from API
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/categories');
+      const list = Array.isArray(res.data?.categories)
+        ? res.data.categories
+        : Array.isArray(res.data)
+        ? res.data
+        : [];
+      
+      setCategories(list);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories([]);
+    }
+  };
 
   const getMoodColor = (mood) => {
     const colors = {
@@ -39,8 +62,7 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
   };
 
   const getDateObj = (expense) => {
-    // Prioritize the date field, fallback to createdAt
-    const raw = expense?.date || expense?.createdAt;
+    const raw = expense?.date || expense?.createdAt || expense?.updatedAt;
     const d = raw ? new Date(raw) : null;
     return d && !isNaN(d.getTime()) ? d : null;
   };
@@ -48,27 +70,17 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
   const formatDate = (expense) => {
     const d = getDateObj(expense);
     if (!d) return '-';
-    return d.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric',
-      timeZone: 'UTC' // Use UTC to avoid timezone shifts
-    });
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const formatTime = (expense) => {
     const d = getDateObj(expense);
     if (!d) return '-';
-    return d.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      timeZone: 'UTC' // Use UTC to avoid timezone shifts
-    });
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
   // Helper: convert Date -> "YYYY-MM-DDTHH:mm" for <input type="datetime-local">
   const toLocalInputValue = (d) => {
-    if (!d) return '';
     const pad = (n) => String(n).padStart(2, '0');
     const yyyy = d.getFullYear();
     const mm = pad(d.getMonth() + 1);
@@ -92,7 +104,7 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
       if (sortBy === 'date') {
         const da = getDateObj(a)?.getTime() || 0;
         const db = getDateObj(b)?.getTime() || 0;
-        return db - da; // Newest first
+        return db - da;
       } else if (sortBy === 'amount') {
         return b.amount - a.amount;
       } else if (sortBy === 'category') {
@@ -101,18 +113,18 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
       return 0;
     });
 
-  const categories = [...new Set(expenses.map(expense => expense.category))].filter(Boolean);
+  // Use categories from API instead of extracting from expenses
+  const availableCategories = categories.map(cat => cat.name || cat.title).filter(Boolean);
   const totalSpent = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
   const averageSpent = expenses.length > 0 ? totalSpent / expenses.length : 0;
 
   const handleEdit = (expense) => {
     setEditingId(expense._id);
-    const dateObj = getDateObj(expense);
     setEditForm({
       amount: expense.amount,
       mood: expense.mood,
       category: expense.category,
-      dateTime: toLocalInputValue(dateObj)
+      dateTime: toLocalInputValue(getDateObj(expense) || new Date())
     });
   };
 
@@ -129,8 +141,9 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
 
     setLoading(true);
     try {
-      // Convert local datetime to ISO string for backend
-      const isoDate = new Date(editForm.dateTime).toISOString();
+      // Convert local datetime to ISO string for backend - FIXED timezone issue
+      const localDate = new Date(editForm.dateTime);
+      const isoDate = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString();
 
       console.log('Sending update request for expense:', expenseId);
       console.log('Update data:', {
@@ -143,7 +156,7 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
       const response = await api.put(`/expenses/${expenseId}`, {
         amount: parseFloat(editForm.amount),
         mood: editForm.mood,
-        category: editForm.category.toLowerCase(), // Ensure lowercase for consistency
+        category: editForm.category,
         date: isoDate,
       });
 
@@ -230,7 +243,7 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
                 className="bg-[#3D3D3D] border border-[#444] text-[#E0E0E0] rounded px-3 py-2 text-sm"
               >
                 <option value="all">All Categories</option>
-                {categories.map(category => (
+                {availableCategories.map(category => (
                   <option key={category} value={category}>
                     {String(category || '').charAt(0).toUpperCase() + String(category || '').slice(1)}
                   </option>
@@ -245,9 +258,9 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="bg-[#3D3D3D] border border-[#444] text-[#E0E0E0] rounded px-3 py-2 text-sm"
               >
-                <option value="date">Sort by Date (Newest First)</option>
-                <option value="amount">Sort by Amount (High to Low)</option>
-                <option value="category">Sort by Category (A-Z)</option>
+                <option value="date">Sort by Date</option>
+                <option value="amount">Sort by Amount</option>
+                <option value="category">Sort by Category</option>
               </select>
             </div>
           </div>
@@ -310,7 +323,7 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
                               className="w-full p-2 bg-[#2b2b2b] border border-[#444] text-white rounded"
                             >
                               <option value="">Select Category</option>
-                              {categories.map(cat => (
+                              {availableCategories.map(cat => (
                                 <option key={cat} value={cat}>
                                   {String(cat || '').charAt(0).toUpperCase() + String(cat || '').slice(1)}
                                 </option>
@@ -356,7 +369,7 @@ const SpendingHistory = ({ expenses, onExpenseUpdated, onExpenseDeleted }) => {
                             </span>
                             <div>
                               <p className="text-white font-medium capitalize">
-                                {expense.category || 'Uncategorized'}
+                                {expense.category}
                               </p>
                               <p className={`text-sm capitalize ${getMoodColor(expense.mood)}`}>
                                 {expense.mood}
